@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Authentication;
 using System.Threading.Tasks;
 using BinanceExchange.API.Client.Interfaces;
@@ -152,12 +153,12 @@ namespace BinanceExchange.API.Websockets
             var streamResponse = await BinanceClient.StartUserDataStream();
 
             var endpoint = new Uri($"{BaseWebsocketUri}/{streamResponse.ListenKey}");
-            return CreateUserDataBinanceWebSocket(endpoint, userDataMessageHandlers);
+            return CreateUserDataBinanceWebSocket(endpoint, streamResponse.ListenKey, userDataMessageHandlers);
         }
 
-        private Guid CreateUserDataBinanceWebSocket(Uri endpoint, UserDataWebSocketMessages userDataWebSocketMessages)
+        private Guid CreateUserDataBinanceWebSocket(Uri endpoint, string listenKey, UserDataWebSocketMessages userDataWebSocketMessages)
         {
-            var websocket = new BinanceWebSocket(endpoint.AbsoluteUri);
+            var websocket = new BinanceWebSocket(endpoint.AbsoluteUri, listenKey);
             websocket.OnOpen += (sender, e) =>
             {
                 Logger.Debug($"WebSocket Opened:{endpoint.AbsoluteUri}");
@@ -253,6 +254,7 @@ namespace BinanceExchange.API.Websockets
 
         /// <summary>
         /// Close a specific WebSocket instance using the Guid provided on creation
+        /// If it is a user data stream socket then also the listenKey is closed
         /// </summary>
         /// <param name="id"></param>
         /// <param name="fromError"></param>
@@ -264,12 +266,34 @@ namespace BinanceExchange.API.Websockets
                 ActiveWebSockets.Remove(id);
                 if (!fromError)
                 {
-                    ws.CloseAsync(CloseStatusCode.PolicyViolation);
+                    ws.CloseAsync(CloseStatusCode.PolicyViolation); 
+                }
+                if (ws.ListenKey != null)
+                {
+                    this.BinanceClient.CloseUserDataStream(ws.ListenKey).Start();
                 }
             }
             else
             {
                 throw new Exception($"No Websocket exists with the Id {id.ToString()}");
+            }
+        }
+
+        /// <summary>
+        /// Send a ping to the websocket instance
+        /// </summary>
+        /// <param name="guid">Websocket instance GUID</param>
+        /// <returns>True if the socket server replied, false otherwise</returns>
+        public bool PingWebSocketInstance(Guid guid)
+        {
+            if (ActiveWebSockets.ContainsKey(guid))
+            {
+                var ws = ActiveWebSockets[guid];
+                return ws.Ping();
+            }
+            else
+            {
+                throw new Exception($"No Websocket exists with the Id {guid.ToString()}");
             }
         }
     }

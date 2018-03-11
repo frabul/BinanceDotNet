@@ -8,10 +8,21 @@ namespace BinanceExchange.API.Websockets
     /// </summary>
     public class BinanceWebSocket : WebSocket
     {
-        public Guid Id;
-        public BinanceWebSocket(string url, params string[] protocols) : base(url, protocols)
+        public Guid Id { get; private set; }
+        public string ListenKey { get; private set; }
+        public BinanceWebSocket(string url) : base(url)
         {
             Id = Guid.NewGuid();
+        }
+
+        public BinanceWebSocket(string url, string listenKey) : this(url)
+        {
+            ListenKey = listenKey;
+        }
+        public BinanceWebSocket(string url, string listenKey, params string[] protocols) : base(url, protocols)
+        {
+            Id = Guid.NewGuid();
+            ListenKey = listenKey;
         }
     }
 }
