@@ -42,5 +42,8 @@ namespace BinanceExchange.API.Models.Response
 
         [DataMember(Order = 10)]
         public bool IsBestMatch { get; set; }
+
+        [DataMember(Order = 9)]
+        public long OrderId { get; set; }
     }
 }
