@@ -15,7 +15,7 @@ namespace BinanceExchange.API
 {
     public class RequestClient
     {
-        private static readonly HttpClient _httpClient;
+        private readonly HttpClient _httpClient;
         private SemaphoreSlim _rateSemaphore;
         private int _limit = 10;
         /// <summary>
@@ -29,19 +29,16 @@ namespace BinanceExchange.API
         private TimeSpan _timestampOffset;
         private ILog _logger;
         private readonly object LockObject = new object();
-
-        static RequestClient()
-        {
+         
+        public RequestClient()
+        { 
             var httpClientHandler = new HttpClientHandler
             {
                 AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
             };
             _httpClient = new HttpClient(httpClientHandler);
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        }
 
-        public RequestClient()
-        {
             _rateSemaphore = new SemaphoreSlim(_limit, _limit);
             Stopwatch = new Stopwatch();
             _logger = LogManager.GetLogger(typeof(RequestClient));
