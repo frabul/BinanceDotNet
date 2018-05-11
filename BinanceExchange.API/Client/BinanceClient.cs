@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using BinanceExchange.API.Caching;
 using BinanceExchange.API.Client.Interfaces;
@@ -18,7 +19,8 @@ namespace BinanceExchange.API.Client
     /// </summary>
     public class BinanceClient : IBinanceClient
     {
-        public TimeSpan TimestampOffset {
+        public TimeSpan TimestampOffset
+        {
             get => _timestampOffset;
             set
             {
@@ -84,8 +86,8 @@ namespace BinanceExchange.API.Client
             Guard.AgainstNullOrEmpty(userDataListenKey);
 
             return await _apiProcessor.ProcessPutRequest<UserDataStreamResponse>(Endpoints.UserStream.KeepAliveUserDataStream(userDataListenKey));
-        }        
-        
+        }
+
         /// <summary>
         /// Closes a user data stream
         /// </summary>
@@ -155,7 +157,7 @@ namespace BinanceExchange.API.Client
         {
             Guard.AgainstNull(request);
             Guard.AgainstNull(request.Symbol);
-            if (request.Limit == null || (request.Limit <= 0 || request.Limit > 500)) 
+            if (request.Limit == null || (request.Limit <= 0 || request.Limit > 500))
             {
                 request.Limit = 500;
             }
@@ -173,7 +175,7 @@ namespace BinanceExchange.API.Client
             Guard.AgainstNull(request.Symbol);
             Guard.AgainstNull(request.Interval);
 
-            if (request.Limit == 0 || request.Limit > 500) 
+            if (request.Limit == 0 || request.Limit > 500)
             {
                 request.Limit = 500;
             }
@@ -199,7 +201,7 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<List<SymbolPriceResponse>> GetSymbolsPriceTicker()
         {
-             return await _apiProcessor.ProcessGetRequest<List<SymbolPriceResponse>>(Endpoints.MarketData.AllSymbolsPriceTicker);
+            return await _apiProcessor.ProcessGetRequest<List<SymbolPriceResponse>>(Endpoints.MarketData.AllSymbolsPriceTicker);
         }
 
         /// <summary>
@@ -208,7 +210,7 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<List<SymbolOrderBookResponse>> GetSymbolOrderBookTicker()
         {
-             return await _apiProcessor.ProcessGetRequest<List<SymbolOrderBookResponse>>(Endpoints.MarketData.SymbolsOrderBookTicker);
+            return await _apiProcessor.ProcessGetRequest<List<SymbolOrderBookResponse>>(Endpoints.MarketData.SymbolsOrderBookTicker);
         }
         #endregion
 
@@ -279,7 +281,7 @@ namespace BinanceExchange.API.Client
         {
             receiveWindow = SetReceiveWindow(receiveWindow);
             Guard.AgainstNull(request.Symbol);
-      
+
             return await _apiProcessor.ProcessDeleteRequest<CancelOrderResponse>(Endpoints.Account.CancelOrder(request), receiveWindow);
         }
 
@@ -305,7 +307,7 @@ namespace BinanceExchange.API.Client
         {
             receiveWindow = SetReceiveWindow(receiveWindow);
             Guard.AgainstNull(request.Symbol);
-      
+
             return await _apiProcessor.ProcessGetRequest<List<OrderResponse>>(Endpoints.Account.AllOrders(request), receiveWindow);
         }
 
@@ -328,7 +330,9 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<List<AccountTradeReponse>> GetAccountTrades(AllTradesRequest request, int receiveWindow = -1)
         {
+            await RateLimiter.WaitAsync(5);
             receiveWindow = SetReceiveWindow(receiveWindow);
+
             return await _apiProcessor.ProcessGetRequest<List<AccountTradeReponse>>(Endpoints.Account.AccountTradeList(request), receiveWindow);
         }
 
@@ -410,6 +414,28 @@ namespace BinanceExchange.API.Client
             }
 
             return receiveWindow;
+        }
+    }
+
+    static class RateLimiter
+    {
+        static SemaphoreSlim Sem = new SemaphoreSlim(1200, 1200);
+        static public async Task WaitAsync(int weight)
+        {
+            for (int i = 0; i < weight; i++)
+            {
+                await Sem.WaitAsync();
+            }
+            ReleaseAsync(weight);
+        }
+
+        static async Task ReleaseAsync(int weight)
+        {
+            await Task.Delay(60000);
+            for (int i = 0; i < weight; i++)
+            {
+                Sem.Release();
+            }
         }
     }
 }
