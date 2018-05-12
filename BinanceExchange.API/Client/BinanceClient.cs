@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BinanceExchange.API.Caching;
@@ -35,6 +36,9 @@ namespace BinanceExchange.API.Client
         private readonly int _defaultReceiveWindow;
         private RequestClient _requestClient;
         private readonly ILog _logger;
+        private ExchangeInfoResponse _ExchangeInfo = null;
+        private RateLimiter RateLimiter;
+
 
         /// <summary>
         /// Create a new Binance Client based on the configuration provided
@@ -52,9 +56,9 @@ namespace BinanceExchange.API.Client
             _defaultReceiveWindow = configuration.DefaultReceiveWindow;
             _apiKey = configuration.ApiKey;
             _secretKey = configuration.SecretKey;
-            _requestClient.SetTimestampOffset(configuration.TimestampOffset);
-            _requestClient.SetRateLimiting(configuration.EnableRateLimiting);
+            _requestClient.SetTimestampOffset(configuration.TimestampOffset); 
             _requestClient.SetAPIKey(_apiKey);
+            InitExchangeInfo().Wait();
             if (apiProcessor == null)
             {
                 _apiProcessor = new APIProcessor(_apiKey, _secretKey, new APICacheManager(), _requestClient);
@@ -84,7 +88,7 @@ namespace BinanceExchange.API.Client
         public async Task<UserDataStreamResponse> KeepAliveUserDataStream(string userDataListenKey)
         {
             Guard.AgainstNullOrEmpty(userDataListenKey);
-
+            await RateLimiter.Requests(1);
             return await _apiProcessor.ProcessPutRequest<UserDataStreamResponse>(Endpoints.UserStream.KeepAliveUserDataStream(userDataListenKey));
         }
 
@@ -96,7 +100,7 @@ namespace BinanceExchange.API.Client
         public async Task<UserDataStreamResponse> CloseUserDataStream(string userDataListenKey)
         {
             Guard.AgainstNullOrEmpty(userDataListenKey);
-
+            await RateLimiter.Requests(1);
             return await _apiProcessor.ProcessDeleteRequest<UserDataStreamResponse>(Endpoints.UserStream.CloseUserDataStream(userDataListenKey));
         }
         #endregion
@@ -107,6 +111,7 @@ namespace BinanceExchange.API.Client
         /// </summary>
         public async Task<EmptyResponse> TestConnectivity()
         {
+            await RateLimiter.Requests(1);
             return await _apiProcessor.ProcessGetRequest<EmptyResponse>(Endpoints.General.TestConnectivity);
         }
 
@@ -116,6 +121,7 @@ namespace BinanceExchange.API.Client
         /// <returns><see cref="ServerTimeResponse"/></returns>
         public async Task<ServerTimeResponse> GetServerTime()
         {
+            await RateLimiter.Requests(1);
             return await _apiProcessor.ProcessGetRequest<ServerTimeResponse>(Endpoints.General.ServerTime);
         }
 
@@ -125,6 +131,7 @@ namespace BinanceExchange.API.Client
         /// <returns><see cref="ExchangeInfoResponse"/></returns>
         public async Task<ExchangeInfoResponse> GetExchangeInfo()
         {
+            await RateLimiter.Requests(1);
             return await _apiProcessor.ProcessGetRequest<ExchangeInfoResponse>(Endpoints.General.ExchangeInfo);
         }
 
@@ -145,6 +152,12 @@ namespace BinanceExchange.API.Client
             {
                 throw new ArgumentException("When requesting the order book, you can't request more than 100 at a time.", nameof(limit));
             }
+            var weight = 1;
+            if (limit > 499)
+                weight = 5;
+            else if( limit > 999)
+                weight = 10;
+            await RateLimiter.Requests(weight);
             return await _apiProcessor.ProcessGetRequest<OrderBookResponse>(Endpoints.MarketData.OrderBook(symbol, limit, useCache));
         }
 
@@ -161,7 +174,7 @@ namespace BinanceExchange.API.Client
             {
                 request.Limit = 500;
             }
-
+            await RateLimiter.Requests(1);
             return await _apiProcessor.ProcessGetRequest<List<CompressedAggregateTradeResponse>>(Endpoints.MarketData.CompressedAggregateTrades(request));
         }
 
@@ -179,7 +192,7 @@ namespace BinanceExchange.API.Client
             {
                 request.Limit = 500;
             }
-
+            await RateLimiter.Requests(1);
             return await _apiProcessor.ProcessGetRequest<List<KlineCandleStickResponse>>(Endpoints.MarketData.KlineCandlesticks(request));
         }
 
@@ -191,7 +204,10 @@ namespace BinanceExchange.API.Client
         public async Task<SymbolPriceChangeTickerResponse> GetDailyTicker(string symbol)
         {
             Guard.AgainstNull(symbol);
-
+            var weight = 1;
+            if (symbol == null)
+                weight = _ExchangeInfo.Symbols.Count / 2;
+            await RateLimiter.Requests(weight);
             return await _apiProcessor.ProcessGetRequest<SymbolPriceChangeTickerResponse>(Endpoints.MarketData.DayPriceTicker(symbol));
         }
 
@@ -201,6 +217,7 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<List<SymbolPriceResponse>> GetSymbolsPriceTicker()
         {
+            await RateLimiter.Requests(50);
             return await _apiProcessor.ProcessGetRequest<List<SymbolPriceResponse>>(Endpoints.MarketData.AllSymbolsPriceTicker);
         }
 
@@ -210,6 +227,7 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<List<SymbolOrderBookResponse>> GetSymbolOrderBookTicker()
         {
+            await RateLimiter.Requests(50);
             return await _apiProcessor.ProcessGetRequest<List<SymbolOrderBookResponse>>(Endpoints.MarketData.SymbolsOrderBookTicker);
         }
         #endregion
@@ -228,6 +246,8 @@ namespace BinanceExchange.API.Client
             Guard.AgainstNull(request.Side);
             Guard.AgainstNull(request.Type);
             Guard.AgainstNull(request.Quantity);
+            await RateLimiter.Requests(1);
+            await RateLimiter.WaitOrder();
 
             switch (request.NewOrderResponseType)
             {
@@ -266,7 +286,7 @@ namespace BinanceExchange.API.Client
         {
             receiveWindow = SetReceiveWindow(receiveWindow);
             Guard.AgainstNull(request.Symbol);
-
+            await RateLimiter.Requests(1);
             return await _apiProcessor.ProcessGetRequest<OrderResponse>(Endpoints.Account.QueryOrder(request), receiveWindow);
         }
 
@@ -281,7 +301,7 @@ namespace BinanceExchange.API.Client
         {
             receiveWindow = SetReceiveWindow(receiveWindow);
             Guard.AgainstNull(request.Symbol);
-
+            await RateLimiter.Requests(1);
             return await _apiProcessor.ProcessDeleteRequest<CancelOrderResponse>(Endpoints.Account.CancelOrder(request), receiveWindow);
         }
 
@@ -294,6 +314,10 @@ namespace BinanceExchange.API.Client
         public async Task<List<OrderResponse>> GetCurrentOpenOrders(CurrentOpenOrdersRequest request, int receiveWindow = -1)
         {
             receiveWindow = SetReceiveWindow(receiveWindow);
+            var weight = 1;
+            if (request.Symbol == null)
+                weight = _ExchangeInfo.Symbols.Count / 2;
+            await RateLimiter.Requests(weight);
             return await _apiProcessor.ProcessGetRequest<List<OrderResponse>>(Endpoints.Account.CurrentOpenOrders(request), receiveWindow);
         }
 
@@ -307,7 +331,7 @@ namespace BinanceExchange.API.Client
         {
             receiveWindow = SetReceiveWindow(receiveWindow);
             Guard.AgainstNull(request.Symbol);
-
+            await RateLimiter.Requests(5);
             return await _apiProcessor.ProcessGetRequest<List<OrderResponse>>(Endpoints.Account.AllOrders(request), receiveWindow);
         }
 
@@ -319,6 +343,7 @@ namespace BinanceExchange.API.Client
         public async Task<AccountInformationResponse> GetAccountInformation(int receiveWindow = -1)
         {
             receiveWindow = SetReceiveWindow(receiveWindow);
+            await RateLimiter.Requests(5);
             return await _apiProcessor.ProcessGetRequest<AccountInformationResponse>(Endpoints.Account.AccountInformation, receiveWindow);
         }
 
@@ -330,7 +355,7 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<List<AccountTradeReponse>> GetAccountTrades(AllTradesRequest request, int receiveWindow = -1)
         {
-            await RateLimiter.WaitAsync(5);
+            await RateLimiter.Requests(5);
             receiveWindow = SetReceiveWindow(receiveWindow);
 
             return await _apiProcessor.ProcessGetRequest<List<AccountTradeReponse>>(Endpoints.Account.AccountTradeList(request), receiveWindow);
@@ -401,6 +426,7 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<DepositAddressResponse> GetSystemStatus(int receiveWindow = -1)
         {
+            await RateLimiter.Requests(1);
             receiveWindow = SetReceiveWindow(receiveWindow);
             return await _apiProcessor.ProcessGetRequest<DepositAddressResponse>(Endpoints.Account.SystemStatus(), receiveWindow);
         }
@@ -415,27 +441,18 @@ namespace BinanceExchange.API.Client
 
             return receiveWindow;
         }
-    }
 
-    static class RateLimiter
-    {
-        static SemaphoreSlim Sem = new SemaphoreSlim(1200, 1200);
-        static public async Task WaitAsync(int weight)
+        private async Task<ExchangeInfoResponse> InitExchangeInfo()
         {
-            for (int i = 0; i < weight; i++)
-            {
-                await Sem.WaitAsync();
-            }
-            ReleaseAsync(weight);
-        }
+            if (_ExchangeInfo == null)
+                _ExchangeInfo = await GetExchangeInfo();
 
-        static async Task ReleaseAsync(int weight)
-        {
-            await Task.Delay(60000);
-            for (int i = 0; i < weight; i++)
-            {
-                Sem.Release();
-            }
+            var rateLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "REQUESTS").First() ;
+            var ordersLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "ORDERS").First();
+            RateLimiter = new RateLimiter(rateLimit.Limit, ordersLimit.Limit);
+            return _ExchangeInfo;
         }
     }
+
+  
 }

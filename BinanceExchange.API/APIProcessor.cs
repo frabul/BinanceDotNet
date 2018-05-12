@@ -35,7 +35,7 @@ namespace BinanceExchange.API
 
             _requestClient = requestClient;
             _logger = LogManager.GetLogger(typeof(APIProcessor));
-            _logger.Debug( $"API Processor set up. Cache Enabled={_cacheEnabled}");
+            _logger.Debug($"API Processor set up. Cache Enabled={_cacheEnabled}");
         }
 
         /// <summary>
@@ -73,11 +73,14 @@ namespace BinanceExchange.API
                 {
                     throw new Exception("Unable to deserialize to provided type");
                 }
-                if (_apiCache.Contains(fullCacheKey))
+                if (_cacheEnabled)
                 {
-                    _apiCache.Remove(fullCacheKey);
+                    if (_apiCache.Contains(fullCacheKey))
+                    {
+                        _apiCache.Remove(fullCacheKey);
+                    }
+                    _apiCache.Add(messageObject, fullCacheKey, _cacheTime);
                 }
-                _apiCache.Add(messageObject, fullCacheKey, _cacheTime);
                 return messageObject;
             }
             var errorJson = await message.Content.ReadAsStringAsync();
@@ -100,8 +103,8 @@ namespace BinanceExchange.API
             {
                 return new BinanceBadRequestException(errorObject);
             }
-            return parsedStatusCode >= 500 ? 
-                new BinanceServerException(errorObject) : 
+            return parsedStatusCode >= 500 ?
+                new BinanceServerException(errorObject) :
                 new BinanceException("Binance API Error", errorObject);
         }
 
@@ -116,7 +119,7 @@ namespace BinanceExchange.API
         {
             item = null;
             var result = _apiCache.Contains(fullKey);
-            item =  result ? _apiCache.Get<T>(fullKey) : null;
+            item = result ? _apiCache.Get<T>(fullKey) : null;
             return result;
         }
 
@@ -138,7 +141,8 @@ namespace BinanceExchange.API
                 }
             }
             HttpResponseMessage message;
-            switch (endpoint.SecurityType) { 
+            switch (endpoint.SecurityType)
+            {
                 case EndpointSecurityType.ApiKey:
                 case EndpointSecurityType.None:
                     message = await _requestClient.GetRequest(endpoint.Uri);
@@ -171,7 +175,8 @@ namespace BinanceExchange.API
                 }
             }
             HttpResponseMessage message;
-            switch (endpoint.SecurityType) { 
+            switch (endpoint.SecurityType)
+            {
                 case EndpointSecurityType.ApiKey:
                     message = await _requestClient.DeleteRequest(endpoint.Uri);
                     break;
@@ -204,7 +209,8 @@ namespace BinanceExchange.API
                 }
             }
             HttpResponseMessage message;
-            switch (endpoint.SecurityType) { 
+            switch (endpoint.SecurityType)
+            {
                 case EndpointSecurityType.ApiKey:
                     message = await _requestClient.PostRequest(endpoint.Uri);
                     break;
@@ -238,7 +244,8 @@ namespace BinanceExchange.API
                 }
             }
             HttpResponseMessage message;
-            switch (endpoint.SecurityType) { 
+            switch (endpoint.SecurityType)
+            {
                 case EndpointSecurityType.ApiKey:
                     message = await _requestClient.PutRequest(endpoint.Uri);
                     break;

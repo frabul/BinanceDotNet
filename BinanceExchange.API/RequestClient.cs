@@ -15,46 +15,26 @@ namespace BinanceExchange.API
 {
     public class RequestClient
     {
-        private readonly HttpClient _httpClient;
-        private SemaphoreSlim _rateSemaphore;
-        private int _limit = 10;
-        /// <summary>
-        /// Number of seconds the for the Limit of requests (10 seconds for 10 requests etc)
-        /// </summary>
-        public static int SecondsLimit = 10;
-        private bool RateLimitingEnabled = false;
-        private const string APIHeader = "X-MBX-APIKEY";
-        private readonly Stopwatch Stopwatch;
-        private int _concurrentRequests = 0;
+        private readonly HttpClient _httpClient;  
+        private const string APIHeader = "X-MBX-APIKEY";  
         private TimeSpan _timestampOffset;
         private ILog _logger;
         private readonly object LockObject = new object();
-         
+
         public RequestClient()
-        { 
+        {
             var httpClientHandler = new HttpClientHandler
             {
                 AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
             };
             _httpClient = new HttpClient(httpClientHandler);
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            _rateSemaphore = new SemaphoreSlim(_limit, _limit);
-            Stopwatch = new Stopwatch();
+             
             _logger = LogManager.GetLogger(typeof(RequestClient));
         }
 
 
-        /// <summary>
-        /// Recreates the Semaphore, and reassigns a Limit
-        /// </summary>
-        /// <param name="limit">Request limit</param>
-        public void SetRequestLimit(int limit)
-        {
-            _limit = limit;
-            _rateSemaphore = new SemaphoreSlim(limit, limit);
-            _logger.Debug($"Request Limit Adjusted to: {limit}");
-        }
+
 
         /// <summary>
         /// Used to adjust the client timestamp
@@ -65,28 +45,7 @@ namespace BinanceExchange.API
             _timestampOffset = time;
             _logger.Debug($"Timestamp offset is now : {time}");
         }
-
-        /// <summary>
-        /// Sets whether Rate limiting is enabled or disabled
-        /// </summary>
-        /// <param name="enabled"></param>
-        public void SetRateLimiting(bool enabled)
-        {
-            var set = enabled ? "enabled" : "disabled";
-            RateLimitingEnabled = enabled;
-            _logger.Debug($"Rate Limiting has been {set}");
-        }
-
-        /// <summary>
-        /// Assigns a new seconds limit
-        /// </summary>
-        /// <param name="limit">Seconds limit</param>
-        public void SetSecondsLimit(int limit)
-        {
-            SecondsLimit = limit;
-            _logger.Debug($"Rate Limiting seconds limit has been set to {limit}");
-        }
-
+         
         /// <summary>
         /// Assigns a new seconds limit
         /// </summary>
@@ -249,47 +208,20 @@ namespace BinanceExchange.API
         /// <returns></returns>
         private async Task<HttpResponseMessage> CreateRequest(Uri endpoint, HttpVerb verb = HttpVerb.GET)
         {
-            Task<HttpResponseMessage> task = null;
-
-            if (RateLimitingEnabled)
-            {
-                await _rateSemaphore.WaitAsync();
-                if (Stopwatch.Elapsed.Seconds >= SecondsLimit || _rateSemaphore.CurrentCount == 0 || _concurrentRequests == _limit)
-                {
-                    var seconds = (SecondsLimit - Stopwatch.Elapsed.Seconds) * 1000;
-                    var sleep = seconds > 0 ? seconds : seconds * -1;
-                    Thread.Sleep(sleep);
-                    _concurrentRequests = 0;
-                    Stopwatch.Restart();
-                }
-                ++_concurrentRequests;
-            }
-            var taskFunction = new Func<Task<HttpResponseMessage>, Task<HttpResponseMessage>>(t =>
-            {
-                if (!RateLimitingEnabled) return t;
-                _rateSemaphore.Release();
-                if (_rateSemaphore.CurrentCount != _limit || Stopwatch.Elapsed.Seconds < SecondsLimit) return t;
-                Stopwatch.Restart();
-                --_concurrentRequests;
-                return t;
-            });
+            Task<HttpResponseMessage> task = null; 
             switch (verb)
             {
                 case HttpVerb.GET:
-                    task = await _httpClient.GetAsync(endpoint)
-                        .ContinueWith(taskFunction);
+                    task = _httpClient.GetAsync(endpoint);
                     break;
                 case HttpVerb.POST:
-                    task = await _httpClient.PostAsync(endpoint, null)
-                        .ContinueWith(taskFunction);
+                    task = _httpClient.PostAsync(endpoint, null);
                     break;
                 case HttpVerb.DELETE:
-                    task = await _httpClient.DeleteAsync(endpoint)
-                        .ContinueWith(taskFunction);
+                    task = _httpClient.DeleteAsync(endpoint);
                     break;
                 case HttpVerb.PUT:
-                    task = await _httpClient.PutAsync(endpoint, null)
-                        .ContinueWith(taskFunction);
+                    task = _httpClient.PutAsync(endpoint, null);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(verb), verb, null);
