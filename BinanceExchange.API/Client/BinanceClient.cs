@@ -56,9 +56,9 @@ namespace BinanceExchange.API.Client
             _defaultReceiveWindow = configuration.DefaultReceiveWindow;
             _apiKey = configuration.ApiKey;
             _secretKey = configuration.SecretKey;
-            _requestClient.SetTimestampOffset(configuration.TimestampOffset); 
+            _requestClient.SetTimestampOffset(configuration.TimestampOffset);
             _requestClient.SetAPIKey(_apiKey);
-            InitExchangeInfo().Wait();
+      
             if (apiProcessor == null)
             {
                 _apiProcessor = new APIProcessor(_apiKey, _secretKey, new APICacheManager(), _requestClient);
@@ -68,6 +68,7 @@ namespace BinanceExchange.API.Client
             {
                 _apiProcessor = apiProcessor;
             }
+            InitExchangeInfo().Wait();
         }
 
         #region User Stream
@@ -131,7 +132,8 @@ namespace BinanceExchange.API.Client
         /// <returns><see cref="ExchangeInfoResponse"/></returns>
         public async Task<ExchangeInfoResponse> GetExchangeInfo()
         {
-            await RateLimiter.Requests(1);
+            if (RateLimiter != null)
+                await RateLimiter.Requests(1);
             return await _apiProcessor.ProcessGetRequest<ExchangeInfoResponse>(Endpoints.General.ExchangeInfo);
         }
 
@@ -155,7 +157,7 @@ namespace BinanceExchange.API.Client
             var weight = 1;
             if (limit > 499)
                 weight = 5;
-            else if( limit > 999)
+            else if (limit > 999)
                 weight = 10;
             await RateLimiter.Requests(weight);
             return await _apiProcessor.ProcessGetRequest<OrderBookResponse>(Endpoints.MarketData.OrderBook(symbol, limit, useCache));
@@ -447,12 +449,12 @@ namespace BinanceExchange.API.Client
             if (_ExchangeInfo == null)
                 _ExchangeInfo = await GetExchangeInfo();
 
-            var rateLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "REQUESTS").First() ;
+            var rateLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "REQUESTS").First();
             var ordersLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "ORDERS").First();
             RateLimiter = new RateLimiter(rateLimit.Limit, ordersLimit.Limit);
             return _ExchangeInfo;
         }
     }
 
-  
+
 }
