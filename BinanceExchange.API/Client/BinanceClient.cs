@@ -451,7 +451,7 @@ namespace BinanceExchange.API.Client
 
             var rateLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "REQUESTS").First();
             var ordersLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "ORDERS").First();
-            RateLimiter = new RateLimiter(rateLimit.Limit, ordersLimit.Limit);
+            RateLimiter = new RateLimiter(rateLimit.Limit * 5 / 4, ordersLimit.Limit);
             return _ExchangeInfo;
         }
     }
