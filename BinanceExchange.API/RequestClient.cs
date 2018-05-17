@@ -15,21 +15,25 @@ namespace BinanceExchange.API
 {
     public class RequestClient
     {
-        private readonly HttpClient _httpClient;  
-        private const string APIHeader = "X-MBX-APIKEY";  
+        private readonly HttpClient _httpClient;
+        private const string APIHeader = "X-MBX-APIKEY";
         private TimeSpan _timestampOffset;
         private ILog _logger;
         private readonly object LockObject = new object();
 
         public RequestClient()
         {
+            ServicePointManager.DefaultConnectionLimit = 500;
             var httpClientHandler = new HttpClientHandler
             {
                 AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
             };
             _httpClient = new HttpClient(httpClientHandler);
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-             
+  
+#if NETCORE
+            httpClientHandler.MaxConnectionsPerServer = 200;
+#endif
             _logger = LogManager.GetLogger(typeof(RequestClient));
         }
 
@@ -45,7 +49,7 @@ namespace BinanceExchange.API
             _timestampOffset = time;
             _logger.Debug($"Timestamp offset is now : {time}");
         }
-         
+
         /// <summary>
         /// Assigns a new seconds limit
         /// </summary>
@@ -208,7 +212,7 @@ namespace BinanceExchange.API
         /// <returns></returns>
         private async Task<HttpResponseMessage> CreateRequest(Uri endpoint, HttpVerb verb = HttpVerb.GET)
         {
-            Task<HttpResponseMessage> task = null; 
+            Task<HttpResponseMessage> task = null;
             switch (verb)
             {
                 case HttpVerb.GET:

@@ -9,21 +9,39 @@ namespace BinanceExchange.API.Client
 
     class RateLimiter
     {
+        SemaphoreSlim RqSem = new SemaphoreSlim(1, 1);
         SemaphoreSlim RequestsSemaphore;
         SemaphoreSlim OrdersSemaphore;
+        Queue<DateTime> RequestsQueue = new Queue<DateTime>();
+        int MaxRequestsPerMinute = 0;
+
+        public int MaxOrdersPerMinute { get; }
+
         public RateLimiter(int requestsLimit, int ordersLimit)
         {
+            MaxRequestsPerMinute = requestsLimit;
+            MaxOrdersPerMinute = ordersLimit;
             RequestsSemaphore = new SemaphoreSlim(requestsLimit, requestsLimit);
             OrdersSemaphore = new SemaphoreSlim(ordersLimit, ordersLimit);
         }
 #pragma warning disable CS4014
         public async Task Requests(int weight)
         {
-            for (int i = 0; i < weight; i++)
+            await RqSem.WaitAsync();
+            while (RequestsQueue.Count > MaxRequestsPerMinute + weight)
             {
-                await RequestsSemaphore.WaitAsync();
+                while (DateTime.Now - RequestsQueue.Peek() > TimeSpan.FromMinutes(1))
+                    RequestsQueue.Dequeue();
+                if (RequestsQueue.Count > MaxRequestsPerMinute + weight)
+                    await Task.Delay(100);
             }
-            ReleaseRequest(weight);
+            for (int i = 0; i < weight; i++)
+                RequestsQueue.Enqueue(DateTime.Now);
+            RqSem.Release();
+
+
+
+
         }
 
         async Task ReleaseRequest(int weight)
