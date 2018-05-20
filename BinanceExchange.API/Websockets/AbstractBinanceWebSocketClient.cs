@@ -264,7 +264,8 @@ namespace BinanceExchange.API.Websockets
                 ActiveWebSockets.Remove(id);
                 if (!fromError)
                 {
-                    ws.Close(CloseStatusCode.PolicyViolation);
+                    try { ws.Close(CloseStatusCode.PolicyViolation); }
+                    catch { }
                 }
                 if (ws.ListenKey != null)
                 {
