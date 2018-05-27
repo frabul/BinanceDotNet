@@ -12,48 +12,55 @@ namespace BinanceExchange.API.Models.Response
     /// Response object received when querying a Binance order
     /// </summary>
     [DataContract]
-    public class OrderResponse: IResponse
-    {
-        [DataMember(Order = 1)]
+    public class OrderResponse : IResponse
+    { 
+        public OrderResponse()
+        {
+
+        }
+        [JsonProperty(PropertyName = "symbol")]
         public string Symbol { get; set; }
 
-        [DataMember(Order = 2)]
+        [JsonProperty(PropertyName = "orderId")]
         public long OrderId { get; set; }
 
-        [DataMember(Order = 3)]
-        public decimal Price { get; set; }
+        [JsonProperty(PropertyName = "clientOrderId")]
+        public string ClientOrderId { get; set; }
 
-        [DataMember(Order = 4)]
+        [JsonProperty(PropertyName = "price")]
+        public decimal Price { get; set; }
+     
         [JsonProperty(PropertyName = "origQty")]
         public decimal OriginalQuantity { get; set; }
-
-        [DataMember(Order = 5)]
+         
         [JsonProperty(PropertyName = "executedQty")]
         public decimal ExecutedQuantity { get; set; }
 
-        [JsonConverter(typeof(StringEnumConverter))]
-        [DataMember(Order = 6)]
+        [JsonProperty(PropertyName = "status")]
+        [JsonConverter(typeof(StringEnumConverter))] 
         public OrderStatus Status { get; set; }
 
-        [DataMember(Order = 7)]
+        [JsonProperty(PropertyName = "timeInForce")]
         public TimeInForce TimeInForce { get; set; }
 
-        [JsonConverter(typeof(StringEnumConverter))]
-        [DataMember(Order = 8)]
+        [JsonProperty(PropertyName = "type")]
+        [JsonConverter(typeof(StringEnumConverter))] 
         public OrderType Type { get; set; }
 
-        [DataMember(Order = 9)]
+        [JsonProperty(PropertyName = "side")]
         public OrderSide Side { get; set; }
 
-        [DataMember(Order = 10)]
+        [JsonProperty(PropertyName = "stopPrice")]
         public decimal StopPrice { get; set; }
-
-        [DataMember(Order = 11)]
+         
         [JsonProperty(PropertyName = "icebergQty")]
         public decimal IcebergQuantity { get; set; }
 
-        [DataMember(Order = 12)]
+        [JsonProperty(PropertyName = "time")]
         [JsonConverter(typeof(EpochTimeConverter))]
         public DateTime Time { get; set; }
+
+        [JsonProperty(PropertyName = "isWorking")]
+        public bool IsWorking { get; set; }
     }
 }

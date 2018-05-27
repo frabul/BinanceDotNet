@@ -20,7 +20,7 @@ namespace BinanceExchange.API.Websockets
     /// </summary>
     public class AbstractBinanceWebSocketClient
     {
-        protected SslProtocols SupportedProtocols { get; } = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls  ;
+        protected SslProtocols SupportedProtocols { get; } = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
 
         /// <summary> 
         /// Base WebSocket URI for Binance API
@@ -89,7 +89,7 @@ namespace BinanceExchange.API.Websockets
         /// <returns></returns>
         public Guid ConnectToPartialDepthWebSocket(string symbol, PartialDepthLevels levels, BinanceWebSocketMessageHandler<BinancePartialData> messageEventHandler)
         {
-            Guard.AgainstNullOrEmpty(symbol, nameof(symbol)); 
+            Guard.AgainstNullOrEmpty(symbol, nameof(symbol));
             Logger.Debug("Connecting to Partial Depth Web Socket");
             var endpoint = new Uri($"{BaseWebsocketUri}/{symbol.ToLower()}@depth{(int)levels}");
             return CreateBinanceWebSocket(endpoint, messageEventHandler);
