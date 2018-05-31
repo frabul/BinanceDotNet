@@ -214,6 +214,7 @@ namespace BinanceExchange.API.Websockets
         private Guid CreateBinanceWebSocket<T>(Uri endpoint, BinanceWebSocketMessageHandler<T> messageEventHandler) where T : IWebSocketResponse
         {
             var websocket = new BinanceWebSocket(endpoint.AbsoluteUri);
+            //websocket.Log.Level = (LogLevel)(LogLevel.Fatal + 1);
             websocket.OnOpen += (sender, e) =>
             {
                 Logger.Debug($"WebSocket Opened:{endpoint.AbsoluteUri}");
@@ -229,13 +230,13 @@ namespace BinanceExchange.API.Websockets
             {
                 Logger.Debug($"WebSocket Error on {endpoint.AbsoluteUri}:", e.Exception);
                 CloseWebSocketInstance(websocket.Id, true);
-                throw new Exception("Binance WebSocket failed")
-                {
-                    Data =
-                    {
-                        {"ErrorEventArgs", e}
-                    }
-                };
+                //throw new Exception("Binance WebSocket failed")
+                //{
+                //    Data =
+                //    {
+                //        {"ErrorEventArgs", e}
+                //    }
+                //};
             };
 
             if (!ActiveWebSockets.ContainsKey(websocket.Id))
