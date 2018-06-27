@@ -124,7 +124,7 @@ namespace BinanceExchange.API.Models.WebSocket
         public bool M { get; set; }
 
         [JsonProperty(PropertyName = "O")]
-        public int O { get; set; }
+        public long O { get; set; }
 
         [JsonProperty(PropertyName = "Z")]
         public decimal Z { get; set; }
