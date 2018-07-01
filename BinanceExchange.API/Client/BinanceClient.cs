@@ -68,7 +68,7 @@ namespace BinanceExchange.API.Client
             {
                 _apiProcessor = apiProcessor;
             }
-            InitExchangeInfo().Wait();
+            InitExchangeInfo(configuration.RateLimitFactor).Wait();
         }
 
         #region User Stream
@@ -444,14 +444,14 @@ namespace BinanceExchange.API.Client
             return receiveWindow;
         }
 
-        private async Task<ExchangeInfoResponse> InitExchangeInfo()
+        private async Task<ExchangeInfoResponse> InitExchangeInfo(double rateLimitFactor  )
         {
             if (_ExchangeInfo == null)
                 _ExchangeInfo = await GetExchangeInfo();
 
             var rateLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "REQUESTS").First();
             var ordersLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "ORDERS").First();
-            RateLimiter = new RateLimiter(rateLimit.Limit * 3 / 5, ordersLimit.Limit);
+            RateLimiter = new RateLimiter((int)(rateLimit.Limit * rateLimitFactor), ordersLimit.Limit);
             return _ExchangeInfo;
         }
     }
