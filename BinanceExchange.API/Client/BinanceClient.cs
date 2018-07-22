@@ -449,9 +449,9 @@ namespace BinanceExchange.API.Client
             if (_ExchangeInfo == null)
                 _ExchangeInfo = await GetExchangeInfo();
 
-            var rateLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "REQUESTS").First();
-            var ordersLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "ORDERS").First();
-            RateLimiter = new RateLimiter((int)(rateLimit.Limit * rateLimitFactor), ordersLimit.Limit);
+            var rateLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "REQUEST_WEIGHT").First();
+            var ordersLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "ORDERS" && rl.Interval == "SECOND").First();
+            RateLimiter = new RateLimiter((int)(rateLimit.Limit * rateLimitFactor), ordersLimit.Limit  );
             return _ExchangeInfo;
         }
     }

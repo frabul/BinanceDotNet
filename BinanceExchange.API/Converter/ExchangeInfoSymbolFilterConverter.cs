@@ -21,7 +21,7 @@ namespace BinanceExchange.API.Converter
             var value = jObject.ToObject<ExchangeInfoSymbolFilter>();
 
             ExchangeInfoSymbolFilter item = null;
-            
+
             switch (value.FilterType)
             {
                 case ExchangeInfoSymbolFilterType.PriceFilter:
@@ -32,6 +32,9 @@ namespace BinanceExchange.API.Converter
                     break;
                 case ExchangeInfoSymbolFilterType.MinNotional:
                     item = new ExchangeInfoSymbolFilterMinNotional();
+                    break;
+                case ExchangeInfoSymbolFilterType.MaxNumAlgoOrders:
+                    item = new ExchangeInfoSymbolFilterMaxNumAlgoOrders();
                     break;
             }
 
