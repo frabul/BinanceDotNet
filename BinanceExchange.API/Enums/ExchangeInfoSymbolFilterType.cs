@@ -13,6 +13,8 @@ namespace BinanceExchange.API.Enums
         [EnumMember(Value = "MIN_NOTIONAL")]
         MinNotional,
         [EnumMember(Value = "MAX_NUM_ALGO_ORDERS")]
-        MaxNumAlgoOrders
+        MaxNumAlgoOrders,
+        [EnumMember(Value = "ICEBERG_PARTS")]
+        IcebergParts,
     }
 }
