@@ -71,6 +71,8 @@ namespace BinanceExchange.API.Client
             InitExchangeInfo(configuration.RateLimitFactor).Wait();
         }
 
+        
+
         #region User Stream
         /// <summary>
         /// Starts a user data stream
@@ -107,6 +109,12 @@ namespace BinanceExchange.API.Client
         #endregion
 
         #region General
+
+        public double GetRequestRate()
+        {
+            return RateLimiter.GetRequestRate();
+        }
+
         /// <summary>
         /// Test the connectivity to the API
         /// </summary>
