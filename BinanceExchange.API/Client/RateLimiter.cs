@@ -62,7 +62,7 @@ namespace BinanceExchange.API.Client
         }
         public int GetOrdersRate()
         {
-           return OrdersSemaphore.;
+            return MaxOrdersPerMinute - OrdersSemaphore.CurrentCount;
         }
         public async Task WaitOrder()
         {
@@ -72,7 +72,7 @@ namespace BinanceExchange.API.Client
 
         async Task ReleaseOrder()
         {
-            await Task.Delay(1000);
+            await Task.Delay(60000);
             OrdersSemaphore.Release();
         }
 
