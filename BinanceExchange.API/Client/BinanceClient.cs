@@ -58,7 +58,7 @@ namespace BinanceExchange.API.Client
             _secretKey = configuration.SecretKey;
             _requestClient.SetTimestampOffset(configuration.TimestampOffset);
             _requestClient.SetAPIKey(_apiKey);
-      
+
             if (apiProcessor == null)
             {
                 _apiProcessor = new APIProcessor(_apiKey, _secretKey, new APICacheManager(), _requestClient);
@@ -71,7 +71,7 @@ namespace BinanceExchange.API.Client
             InitExchangeInfo(configuration.RateLimitFactor).Wait();
         }
 
-        
+
 
         #region User Stream
         /// <summary>
@@ -326,7 +326,7 @@ namespace BinanceExchange.API.Client
             receiveWindow = SetReceiveWindow(receiveWindow);
             var weight = 1;
             if (request.Symbol == null)
-                weight = _ExchangeInfo.Symbols.Count / 2;
+                weight = 40;
             await RateLimiter.Requests(weight);
             return await _apiProcessor.ProcessGetRequest<List<OrderResponse>>(Endpoints.Account.CurrentOpenOrders(request), receiveWindow);
         }
@@ -452,14 +452,14 @@ namespace BinanceExchange.API.Client
             return receiveWindow;
         }
 
-        private async Task<ExchangeInfoResponse> InitExchangeInfo(double rateLimitFactor  )
+        private async Task<ExchangeInfoResponse> InitExchangeInfo(double rateLimitFactor)
         {
             if (_ExchangeInfo == null)
                 _ExchangeInfo = await GetExchangeInfo();
 
             var rateLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "REQUEST_WEIGHT").First();
             var ordersLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "ORDERS" && rl.Interval == "SECOND").First();
-            RateLimiter = new RateLimiter((int)(rateLimit.Limit * rateLimitFactor), ordersLimit.Limit  );
+            RateLimiter = new RateLimiter((int)(rateLimit.Limit * rateLimitFactor), ordersLimit.Limit);
             return _ExchangeInfo;
         }
     }

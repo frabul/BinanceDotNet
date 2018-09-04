@@ -16,7 +16,7 @@ namespace BinanceExchange.API.Client
         int MaxRequestsPerInterval = 0;
         TimeSpan Interval = TimeSpan.Zero;
         public int MaxOrdersPerMinute { get; }
-
+        private const int SubDivision = 2;
         public RateLimiter(int requestsLimit, int ordersLimit)
         {
 
@@ -24,8 +24,8 @@ namespace BinanceExchange.API.Client
             RequestsSemaphore = new SemaphoreSlim(requestsLimit, requestsLimit);
             OrdersSemaphore = new SemaphoreSlim(ordersLimit, ordersLimit);
 
-            Interval = TimeSpan.FromMilliseconds(60000 / 10);
-            MaxRequestsPerInterval = requestsLimit / 10;
+            Interval = TimeSpan.FromMilliseconds(60000 / SubDivision);
+            MaxRequestsPerInterval = requestsLimit / SubDivision;
         }
 #pragma warning disable CS4014
         public async Task Requests(int weight)
@@ -55,10 +55,10 @@ namespace BinanceExchange.API.Client
                     RequestsQueue.Dequeue();
                 int reqs = RequestsQueue.Count;
                 RqSem.Release();
-                return reqs * 10;
+                return reqs * SubDivision;
             }
             else
-                return MaxRequestsPerInterval * 10;
+                return MaxRequestsPerInterval * SubDivision;
         }
         public int GetOrdersRate()
         {
