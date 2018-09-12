@@ -198,9 +198,9 @@ namespace BinanceExchange.API.Client
             Guard.AgainstNull(request.Symbol);
             Guard.AgainstNull(request.Interval);
 
-            if (request.Limit == 0 || request.Limit > 500)
+            if (request.Limit == 0 || request.Limit > 1000)
             {
-                request.Limit = 500;
+                request.Limit = 10000;
             }
             await RateLimiter.Requests(1);
             return await _apiProcessor.ProcessGetRequest<List<KlineCandleStickResponse>>(Endpoints.MarketData.KlineCandlesticks(request));
