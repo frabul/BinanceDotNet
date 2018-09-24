@@ -31,13 +31,13 @@ namespace BinanceExchange.API.Client
         public async Task Requests(int weight)
         {
             await RqSem.WaitAsync();
-            while (RequestsQueue.Count + weight > MaxRequestsPerInterval)
+            do
             {
                 while (RequestsQueue.Count > 0 && DateTime.Now - RequestsQueue.Peek() > Interval)
                     RequestsQueue.Dequeue();
                 if (RequestsQueue.Count + weight > MaxRequestsPerInterval)
                     await Task.Delay(200);
-            }
+            } while (RequestsQueue.Count + weight > MaxRequestsPerInterval);
             for (int i = 0; i < weight; i++)
                 RequestsQueue.Enqueue(DateTime.Now);
             RqSem.Release();
