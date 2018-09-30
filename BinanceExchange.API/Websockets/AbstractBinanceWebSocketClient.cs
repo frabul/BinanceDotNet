@@ -305,7 +305,8 @@ namespace BinanceExchange.API.Websockets
             if (ActiveWebSockets.ContainsKey(guid))
             {
                 var ws = ActiveWebSockets[guid];
-                return ws.Ping();
+                try { return ws.Ping(); }
+                catch { return false; }
             }
             else
             {
