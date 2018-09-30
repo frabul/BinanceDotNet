@@ -9,23 +9,25 @@ namespace BinanceExchange.API.Client
 
     class RateLimiter
     {
-        SemaphoreSlim RqSem = new SemaphoreSlim(1, 1);
-        SemaphoreSlim RequestsSemaphore;
+        SemaphoreSlim RqSem = new SemaphoreSlim(1, 1); 
         SemaphoreSlim OrdersSemaphore;
         Queue<DateTime> RequestsQueue = new Queue<DateTime>();
         int MaxRequestsPerInterval = 0;
-        TimeSpan Interval = TimeSpan.Zero;
+        TimeSpan RequestsInterval = TimeSpan.Zero;
         public int MaxOrdersPerMinute { get; }
         private const int SubDivision = 2;
-        public RateLimiter(int requestsLimit, int ordersLimit)
+
+
+
+        public RateLimiter(int requestPerMinute, int ordersPerSecond)
         {
 
-            MaxOrdersPerMinute = ordersLimit;
-            RequestsSemaphore = new SemaphoreSlim(requestsLimit, requestsLimit);
-            OrdersSemaphore = new SemaphoreSlim(ordersLimit, ordersLimit);
+            MaxOrdersPerMinute = ordersPerSecond;
+        
+            OrdersSemaphore = new SemaphoreSlim(ordersPerSecond, ordersPerSecond);
 
-            Interval = TimeSpan.FromMilliseconds(60000 / SubDivision);
-            MaxRequestsPerInterval = requestsLimit / SubDivision;
+            RequestsInterval = TimeSpan.FromMilliseconds(60000 / SubDivision);
+            MaxRequestsPerInterval = requestPerMinute / SubDivision;
         }
 #pragma warning disable CS4014
         public async Task Requests(int weight)
@@ -33,7 +35,7 @@ namespace BinanceExchange.API.Client
             await RqSem.WaitAsync();
             do
             {
-                while (RequestsQueue.Count > 0 && DateTime.Now - RequestsQueue.Peek() > Interval)
+                while (RequestsQueue.Count > 0 && DateTime.Now - RequestsQueue.Peek() > RequestsInterval)
                     RequestsQueue.Dequeue();
                 if (RequestsQueue.Count + weight > MaxRequestsPerInterval)
                     await Task.Delay(200);
@@ -51,7 +53,7 @@ namespace BinanceExchange.API.Client
         {
             if (RqSem.Wait(100))
             {
-                while (RequestsQueue.Count > 0 && DateTime.Now - RequestsQueue.Peek() > Interval)
+                while (RequestsQueue.Count > 0 && DateTime.Now - RequestsQueue.Peek() > RequestsInterval)
                     RequestsQueue.Dequeue();
                 int reqs = RequestsQueue.Count;
                 RqSem.Release();
@@ -60,6 +62,9 @@ namespace BinanceExchange.API.Client
             else
                 return MaxRequestsPerInterval * SubDivision;
         }
+
+
+
         public int GetOrdersRate()
         {
             return MaxOrdersPerMinute - OrdersSemaphore.CurrentCount;
@@ -72,7 +77,7 @@ namespace BinanceExchange.API.Client
 
         async Task ReleaseOrder()
         {
-            await Task.Delay(60000);
+            await Task.Delay(1500);
             OrdersSemaphore.Release();
         }
 

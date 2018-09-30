@@ -29,6 +29,10 @@ namespace BinanceExchange.API.Client
                 _requestClient.SetTimestampOffset(_timestampOffset);
             }
         }
+
+        public int MarxRequestsPerMinute { get; private set; }
+        public int MaxOrdersPerSecond { get; private set; }
+
         private TimeSpan _timestampOffset;
         private readonly string _apiKey;
         private readonly string _secretKey;
@@ -110,6 +114,10 @@ namespace BinanceExchange.API.Client
 
         #region General
 
+        /// <summary>
+        /// Gets weighted requests per minute
+        /// </summary>
+        /// <returns></returns>
         public double GetRequestRate()
         {
             return RateLimiter.GetRequestRate();
@@ -457,9 +465,10 @@ namespace BinanceExchange.API.Client
             if (_ExchangeInfo == null)
                 _ExchangeInfo = await GetExchangeInfo();
 
-            var rateLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "REQUEST_WEIGHT").First();
-            var ordersLimit = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "ORDERS" && rl.Interval == "SECOND").First();
-            RateLimiter = new RateLimiter((int)(rateLimit.Limit * rateLimitFactor), ordersLimit.Limit);
+            MarxRequestsPerMinute = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "REQUEST_WEIGHT").First().Limit;
+            MaxOrdersPerSecond = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "ORDERS" && rl.Interval == "SECOND").First().Limit;
+
+            RateLimiter = new RateLimiter((int)(MarxRequestsPerMinute * rateLimitFactor), MaxOrdersPerSecond);
             return _ExchangeInfo;
         }
     }
