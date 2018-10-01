@@ -66,7 +66,7 @@ namespace BinanceExchange.API.Websockets
             var endpoint = new Uri($"{BaseWebsocketUri}/{symbol.ToLower()}@kline_{EnumExtensions.GetEnumMemberValue(interval)}");
             return CreateBinanceWebSocket(endpoint, messageEventHandler);
         }
-
+         
         /// <summary>
         /// Connect to the Depth WebSocket
         /// </summary>
@@ -94,6 +94,7 @@ namespace BinanceExchange.API.Websockets
             var endpoint = new Uri($"{BaseWebsocketUri}/{symbol.ToLower()}@depth{(int)levels}");
             return CreateBinanceWebSocket(endpoint, messageEventHandler);
         }
+
         /// <summary>
         /// Connect to the Combined Depth WebSocket
         /// </summary>
@@ -115,7 +116,7 @@ namespace BinanceExchange.API.Websockets
         /// <param name="depth"></param>
         /// <param name="messageEventHandler"></param>
         /// <returns></returns>
-        public Guid ConnectToDepthWebSocketCombinedPartial(string symbols, string depth, BinanceWebSocketMessageHandler<BinancePartialDepthData> messageEventHandler)
+        public Guid ConnectToPartialDepthWebSocketCombined(string symbols, string depth, BinanceWebSocketMessageHandler<BinancePartialDepthData> messageEventHandler)
         {
             Guard.AgainstNullOrEmpty(symbols, nameof(symbols));
             Guard.AgainstNullOrEmpty(depth, nameof(depth));
