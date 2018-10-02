@@ -16,7 +16,7 @@ namespace BinanceExchange.API.Websockets
 {
     public class CombinedWebSocketClient
     {
-        private int StreamsPerSocket = 50;
+        private int StreamsPerSocket = 20;
         private string CombinedWebsocketUri = "wss://stream.binance.com:9443/stream?streams=";
         private SslProtocols SupportedProtocols { get; } = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
         private Dictionary<string, Stream> Streams = new Dictionary<string, Stream>();
@@ -50,7 +50,7 @@ namespace BinanceExchange.API.Websockets
             RefreshTimer.Start();
         }
 
-        public void Unsubscribe(Delegate action)
+        public void Unsubscribe<T>(Action<T> action)
         {
             lock (Streams)
                 foreach (var str in Streams.Values)
