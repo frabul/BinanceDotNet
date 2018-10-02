@@ -53,8 +53,10 @@ namespace BinanceExchange.API.Websockets
         public void Unsubscribe<T>(Action<T> action)
         {
             lock (Streams)
+            {
                 foreach (var str in Streams.Values)
                     str.Unsubscribe(action);
+            }
         }
 
         public void SubscribeKlineStream(string symbol, KlineInterval interval, Action<BinanceKlineData> messageEventHandler)
@@ -71,16 +73,21 @@ namespace BinanceExchange.API.Websockets
 
         private void AddStreamSubscriber<T>(string sockName, Action<T> handler)
         {
-            if (!Streams.TryGetValue(sockName, out var stream))
+            Stream stream;
+            lock (Streams)
             {
-                stream = new Stream<T>(sockName);
-                Streams.Add(stream.SockName, stream);
-                NextRebuildTime = DateTime.Now.AddSeconds(2);
+                if (!Streams.TryGetValue(sockName, out stream))
+                {
+                    stream = new Stream<T>(sockName);
+                    Streams.Add(stream.SockName, stream);
+                    NextRebuildTime = DateTime.Now.AddSeconds(2);
+                }
             }
             if (stream is Stream<T> tstream)
                 tstream.Subscribe(handler);
             else
                 throw new Exception("Wrong handler for the stream.");
+
         }
 
         private void RebuildSockets()
@@ -145,7 +152,9 @@ namespace BinanceExchange.API.Websockets
                     //foreach (var datum in data)
                     {
                         Stream stream;
-                        var found = Streams.TryGetValue(datum.StreamName, out stream);
+                        bool found;
+                        lock (Streams)
+                            found = Streams.TryGetValue(datum.StreamName, out stream);
                         if (found)
                             stream.Pulse(datum.RawData);
                         else
