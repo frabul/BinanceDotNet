@@ -98,7 +98,10 @@ namespace BinanceExchange.API.Websockets
                 socks = ActiveWebSockets.ToArray();
             foreach (var sock in socks)
             {
-                if (sock.WatchDog.Elapsed > TimeSpan.FromSeconds(70) || DateTime.Now > sock.CreationTime.AddHours(6))
+                bool needClose = !(sock.WatchDog.Elapsed > TimeSpan.FromSeconds(70) || DateTime.Now > sock.CreationTime.AddHours(2));
+                if (DateTime.Now > sock.LastPing.AddMinutes(20))
+                    needClose &= sock.Ping();
+                if (needClose)
                     CloseSocket(sock);
             }
 
@@ -258,9 +261,10 @@ namespace BinanceExchange.API.Websockets
             public Stopwatch WatchDog { get; } = new Stopwatch();
             public Stream[] Streams { get; internal set; }
             public DateTime CreationTime { get; } = DateTime.Now;
+            public DateTime LastPing;
             public CombinedWebSocket(string url) : base(url)
             {
-
+                LastPing = DateTime.Now;
             }
         }
     }
