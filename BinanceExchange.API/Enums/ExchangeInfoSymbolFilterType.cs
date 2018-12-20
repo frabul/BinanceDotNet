@@ -16,5 +16,7 @@ namespace BinanceExchange.API.Enums
         MaxNumAlgoOrders,
         [EnumMember(Value = "ICEBERG_PARTS")]
         IcebergParts,
+        [EnumMember(Value = "PERCENT_PRICE")] 
+        PercentPrice,
     }
 }

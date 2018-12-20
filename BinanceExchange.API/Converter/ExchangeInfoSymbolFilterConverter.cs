@@ -39,6 +39,9 @@ namespace BinanceExchange.API.Converter
                 case ExchangeInfoSymbolFilterType.IcebergParts:
                     item = new ExchangeInfoSymbolFilterIcebergParts();
                     break;
+                case ExchangeInfoSymbolFilterType.PercentPrice:
+                    item = new ExchangeInfoSymbolFilter() { FilterType = ExchangeInfoSymbolFilterType.PercentPrice };
+                    break;
             }
 
             serializer.Populate(jObject.CreateReader(), item);
