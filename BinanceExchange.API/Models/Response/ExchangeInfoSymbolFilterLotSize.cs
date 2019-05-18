@@ -19,4 +19,17 @@ namespace BinanceExchange.API.Models.Response
         [DataMember(Order = 3)]
         public Decimal StepSize { get; set; }
     }
+
+    [DataContract]
+    public class ExchangeInfoSymbolFilterMarketLotSize : ExchangeInfoSymbolFilter
+    {
+        [DataMember(Order = 1)]
+        public Decimal MinQty { get; set; }
+
+        [DataMember(Order = 2)]
+        public Decimal MaxQty { get; set; }
+
+        [DataMember(Order = 3)]
+        public Decimal StepSize { get; set; }
+    }
 }

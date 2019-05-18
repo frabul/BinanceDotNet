@@ -18,5 +18,8 @@ namespace BinanceExchange.API.Enums
         IcebergParts,
         [EnumMember(Value = "PERCENT_PRICE")] 
         PercentPrice,
+        [EnumMember(Value = "MARKET_LOT_SIZE")]
+        MarketLotSize,
+        UnknownFilter,
     }
 }

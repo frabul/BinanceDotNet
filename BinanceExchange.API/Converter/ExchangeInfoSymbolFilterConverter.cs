@@ -18,33 +18,42 @@ namespace BinanceExchange.API.Converter
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             JObject jObject = JObject.Load(reader);
-            var value = jObject.ToObject<ExchangeInfoSymbolFilter>();
-
             ExchangeInfoSymbolFilter item = null;
-
-            switch (value.FilterType)
+            try
             {
-                case ExchangeInfoSymbolFilterType.PriceFilter:
-                    item = new ExchangeInfoSymbolFilterPrice();
-                    break;
-                case ExchangeInfoSymbolFilterType.LotSize:
-                    item = new ExchangeInfoSymbolFilterLotSize();
-                    break;
-                case ExchangeInfoSymbolFilterType.MinNotional:
-                    item = new ExchangeInfoSymbolFilterMinNotional();
-                    break;
-                case ExchangeInfoSymbolFilterType.MaxNumAlgoOrders:
-                    item = new ExchangeInfoSymbolFilterMaxNumAlgoOrders();
-                    break;
-                case ExchangeInfoSymbolFilterType.IcebergParts:
-                    item = new ExchangeInfoSymbolFilterIcebergParts();
-                    break;
-                case ExchangeInfoSymbolFilterType.PercentPrice:
-                    item = new ExchangeInfoSymbolFilter() { FilterType = ExchangeInfoSymbolFilterType.PercentPrice };
-                    break;
-            }
+                var value = jObject.ToObject<ExchangeInfoSymbolFilter>();
 
-            serializer.Populate(jObject.CreateReader(), item);
+
+                switch (value.FilterType)
+                {
+                    case ExchangeInfoSymbolFilterType.PriceFilter:
+                        item = new ExchangeInfoSymbolFilterPrice();
+                        break;
+                    case ExchangeInfoSymbolFilterType.LotSize:
+                        item = new ExchangeInfoSymbolFilterLotSize();
+                        break;
+                    case ExchangeInfoSymbolFilterType.MinNotional:
+                        item = new ExchangeInfoSymbolFilterMinNotional();
+                        break;
+                    case ExchangeInfoSymbolFilterType.MaxNumAlgoOrders:
+                        item = new ExchangeInfoSymbolFilterMaxNumAlgoOrders();
+                        break;
+                    case ExchangeInfoSymbolFilterType.IcebergParts:
+                        item = new ExchangeInfoSymbolFilterIcebergParts();
+                        break;
+                    case ExchangeInfoSymbolFilterType.MarketLotSize:
+                        item = new ExchangeInfoSymbolFilter();
+                        break;
+                    default:
+                        item = new ExchangeInfoSymbolFilter() { FilterType = value.FilterType };
+                        break;
+                }
+                serializer.Populate(jObject.CreateReader(), item);
+            }
+            catch  
+            {
+                item = new ExchangeInfoSymbolFilter() { FilterType = ExchangeInfoSymbolFilterType.UnknownFilter };
+            }
             return item;
         }
 

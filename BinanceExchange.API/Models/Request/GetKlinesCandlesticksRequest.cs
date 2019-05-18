@@ -30,7 +30,7 @@ namespace BinanceExchange.API.Models.Request
         public DateTime EndTime { get; set; }
 
         [DataMember(Order = 5)]
-        public int Limit { get; set; }
+        public int Limit { get; set; } = 1000;
 
     }
 }
