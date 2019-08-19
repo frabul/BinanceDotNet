@@ -18,10 +18,9 @@ namespace BinanceExchange.API.Websockets
     {
         private int StreamsPerSocket = 20;
         private string CombinedWebsocketUri = "wss://stream.binance.com:9443/stream?streams=";
-        private SslProtocols SupportedProtocols { get; } = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
-        private Dictionary<string, Stream> Streams = new Dictionary<string, Stream>();
+        private SslProtocols SupportedProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
+        private Dictionary<string, SockStream> Streams = new Dictionary<string, SockStream>();
 
-        private List<CombinedWebSocket> AllSockets = new List<CombinedWebSocket>();
         private List<CombinedWebSocket> ActiveWebSockets = new List<CombinedWebSocket>();
         private Timer RefreshTimer;
         private DateTime NextRebuildTime = DateTime.MinValue;
@@ -73,7 +72,7 @@ namespace BinanceExchange.API.Websockets
 
         private void AddStreamSubscriber<T>(string sockName, Action<T> handler)
         {
-            Stream stream;
+            SockStream stream;
             lock (Streams)
             {
                 if (!Streams.TryGetValue(sockName, out stream))
@@ -106,18 +105,18 @@ namespace BinanceExchange.API.Websockets
             }
 
             //check that all streams have a socket
-            Queue<Stream> streamsWithNoSocket;
+            Queue<SockStream> streamsWithNoSocket;
             lock (ActiveWebSockets)
             {
                 lock (Streams)
-                    streamsWithNoSocket = new Queue<Stream>(Streams.Values.Where(st => !ActiveWebSockets.Any(sock => sock.Streams.Any(ss => ss == st))).ToArray());
+                    streamsWithNoSocket = new Queue<SockStream>(Streams.Values.Where(st => !ActiveWebSockets.Any(sock => sock.Streams.Any(ss => ss == st))).ToArray());
             }
             while (streamsWithNoSocket.Count > 0)
             {
                 CombinedWebSocket sockToRebuild;
                 lock (ActiveWebSockets)
                     sockToRebuild = ActiveWebSockets.FirstOrDefault(s => s.Streams.Length < StreamsPerSocket);
-                List<Stream> streamsForSocket = new List<Stream>();
+                List<SockStream> streamsForSocket = new List<SockStream>();
                 if (sockToRebuild != null)
                 {
                     CloseSocket(sockToRebuild);
@@ -127,12 +126,22 @@ namespace BinanceExchange.API.Websockets
                 while (streamsForSocket.Count < this.StreamsPerSocket && streamsWithNoSocket.Count > 0)
                     streamsForSocket.Add(streamsWithNoSocket.Dequeue());
 
-                OpenWebSocket(streamsForSocket.ToArray());
+                try
+                {
+                    OpenWebSocket(streamsForSocket.ToArray());
+                }
+                catch
+                {
+                    //put all streams that were scheduled for this socket again in streamsWithNoSocket queue
+                    foreach (var sock in streamsForSocket)
+                        streamsWithNoSocket.Enqueue(sock);
+                }
+                
             }
 
         }
 
-        private void OpenWebSocket(Stream[] streamsPerSocket)
+        private void OpenWebSocket(SockStream[] streamsPerSocket)
         {
             string endpoint = this.CombinedWebsocketUri;
             foreach (var str in streamsPerSocket)
@@ -151,18 +160,16 @@ namespace BinanceExchange.API.Websockets
             {
                 try
                 {
-                    var datum = JsonConvert.DeserializeObject<BinanceCombinedWebsocketData>(e.Data);
-                    //foreach (var datum in data)
-                    {
-                        Stream stream;
-                        bool found;
-                        lock (Streams)
-                            found = Streams.TryGetValue(datum.StreamName, out stream);
-                        if (found)
-                            stream.Pulse(datum.RawData);
-                        else
-                            Console.WriteLine("sockNotFound");
-                    }
+                    var datum = JsonConvert.DeserializeObject<BinanceCombinedWebsocketData>(e.Data); 
+                    SockStream stream;
+                    bool found;
+                    lock (Streams)
+                        found = Streams.TryGetValue(datum.StreamName, out stream);
+                    if (found)
+                        stream.Pulse(datum.RawData);
+                    else
+                        Console.WriteLine("sockNotFound");
+                    
                     websocket.WatchDog.Restart();
                 }
                 catch { }
@@ -181,17 +188,21 @@ namespace BinanceExchange.API.Websockets
             };
 
 
-            AllSockets.Add(websocket);
+            
             websocket.SslConfiguration.EnabledSslProtocols = SupportedProtocols;
             try
             {
                 websocket.Connect();
                 websocket.WatchDog.Restart();
                 lock (ActiveWebSockets)
-                    ActiveWebSockets.Add(websocket);
+                    ActiveWebSockets.Add(websocket); 
             }
-            catch { }
+            catch  
+            {
 
+                throw;
+            }
+            
         }
 
         private void CloseSocket(CombinedWebSocket sock)
@@ -207,9 +218,9 @@ namespace BinanceExchange.API.Websockets
             }
         }
 
-        abstract class Stream
+        abstract class SockStream
         {
-            protected Stream(string sockName)
+            protected SockStream(string sockName)
             {
                 SockName = sockName;
             }
@@ -220,7 +231,7 @@ namespace BinanceExchange.API.Websockets
             abstract public void Unsubscribe(Delegate del);
         }
 
-        class Stream<T> : Stream
+        class Stream<T> : SockStream
         {
             public List<Action<T>> Subscribes { get; private set; } = new List<Action<T>>();
 
@@ -259,7 +270,7 @@ namespace BinanceExchange.API.Websockets
         {
 
             public Stopwatch WatchDog { get; } = new Stopwatch();
-            public Stream[] Streams { get; internal set; }
+            public SockStream[] Streams { get; internal set; }
             public DateTime CreationTime { get; } = DateTime.Now;
             public DateTime LastPing;
             public CombinedWebSocket(string url) : base(url)
