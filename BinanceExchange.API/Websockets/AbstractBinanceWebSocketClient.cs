@@ -41,7 +41,9 @@ namespace BinanceExchange.API.Websockets
         protected ILog Logger;
 
         protected const string AccountEventType = "outboundAccountInfo";
+        protected const string OutboundAccountPosition = "outboundAccountPosition";
         protected const string OrderTradeEventType = "executionReport";
+        protected const string ListStatus = "listStatus";
 
         public AbstractBinanceWebSocketClient(IBinanceClient binanceClient, ILog logger = null)
         {
@@ -183,8 +185,14 @@ namespace BinanceExchange.API.Websockets
                             userDataWebSocketMessages.OrderUpdateMessageHandler(orderTradeData);
                         }
                         break;
+                    case OutboundAccountPosition:
+                        //todo
+                        break;
+                    case ListStatus:
+                        //todo
+                        break;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        throw new ArgumentOutOfRangeException("Unknown EventType for user data stream");
                 }
             };
             websocket.OnError += (sender, e) =>
@@ -266,7 +274,7 @@ namespace BinanceExchange.API.Websockets
                 ActiveWebSockets.Remove(id);
                 if (!fromError)
                 {
-                    try { ws.Close(CloseStatusCode.PolicyViolation); }
+                    try { ws.Close(); }
                     catch { }
                 }
                 if (ws.ListenKey != null)
