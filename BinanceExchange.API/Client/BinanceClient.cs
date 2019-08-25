@@ -243,10 +243,20 @@ namespace BinanceExchange.API.Client
         /// Gets the best and quantity on the order book for all symbols
         /// </summary>
         /// <returns></returns>
-        public async Task<List<SymbolOrderBookResponse>> GetSymbolOrderBookTicker()
+        public async Task<List<SymbolOrderBookResponse>> GetSymbolsOrderBookTicker()
         {
-            await RateLimiter.Requests(50);
-            return await _apiProcessor.ProcessGetRequest<List<SymbolOrderBookResponse>>(Endpoints.MarketData.SymbolsOrderBookTicker);
+            await RateLimiter.Requests(2);
+            return await _apiProcessor.ProcessGetRequest<List<SymbolOrderBookResponse>>(Endpoints.MarketData.SymbolsOrderBookTicker());
+        }
+
+        /// <summary>
+        /// Gets the best and quantity on the order book for all symbols
+        /// </summary>
+        /// <returns></returns>
+        public async Task<SymbolOrderBookResponse> GetSymbolOrderBookTicker(string symbol)
+        {
+            await RateLimiter.Requests(1);
+            return await _apiProcessor.ProcessGetRequest<SymbolOrderBookResponse>(Endpoints.MarketData.SymbolsOrderBookTicker(symbol));
         }
         #endregion
 

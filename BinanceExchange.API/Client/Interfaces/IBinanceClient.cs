@@ -79,7 +79,13 @@ namespace BinanceExchange.API.Client.Interfaces
         /// Gets the best and quantity on the order book for all symbols
         /// </summary>
         /// <returns></returns>
-        Task<List<SymbolOrderBookResponse>> GetSymbolOrderBookTicker();
+        Task<List<SymbolOrderBookResponse>> GetSymbolsOrderBookTicker();
+
+        /// <summary>
+        /// Gets the best and quantity on the order book for all symbols
+        /// </summary>
+        /// <returns></returns>
+        Task<SymbolOrderBookResponse> GetSymbolOrderBookTicker(string symbol);
 
         /// <summary>
         /// Creates an order based on the provided request

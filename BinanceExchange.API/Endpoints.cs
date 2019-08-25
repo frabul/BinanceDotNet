@@ -134,7 +134,12 @@ namespace BinanceExchange.API
             /// <summary>
             /// Best price/qty on the order book for all symbols.
             /// </summary>
-            public static BinanceEndpointData SymbolsOrderBookTicker => new BinanceEndpointData(new Uri($"{APIPrefix}/{ApiVersion}/ticker/allBookTickers"), EndpointSecurityType.ApiKey);
+            public static BinanceEndpointData SymbolsOrderBookTicker() => new BinanceEndpointData(new Uri($"{APIPrefix}/v3/ticker/bookTicker"), EndpointSecurityType.None);
+           
+            /// <summary>
+            /// Best price/qty on the order book of a single symbol
+            /// </summary>
+            public static BinanceEndpointData SymbolsOrderBookTicker(string symbol) => new BinanceEndpointData(new Uri($"{APIPrefix}/v3/ticker/bookTicker?symbol={symbol}"), EndpointSecurityType.None);
         }
 
         public static class Account
