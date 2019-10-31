@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using BinanceExchange.API.Client.Interfaces;
-using log4net;
 using WebSocketSharp;
 
 namespace BinanceExchange.API.Websockets
@@ -12,7 +11,7 @@ namespace BinanceExchange.API.Websockets
     /// </summary>
     public class DisposableBinanceWebSocketClient : AbstractBinanceWebSocketClient, IDisposable, IBinanceWebSocketClient
     {
-        public DisposableBinanceWebSocketClient(IBinanceClient binanceClient, ILog logger = null) : base(binanceClient, logger)
+        public DisposableBinanceWebSocketClient(IBinanceClient binanceClient, NLog.Logger logger = null) : base(binanceClient, logger)
         {
         }
 
@@ -27,10 +26,10 @@ namespace BinanceExchange.API.Websockets
             if (!disposing) return;
             AllSockets.ForEach(ws =>
             {
-                if (ws.IsAlive) ws.Close(CloseStatusCode.Normal);
+                if (ws.Ping()) ws.CloseAsync();
             });
-            AllSockets = new List<BinanceWebSocket>();
-            ActiveWebSockets = new Dictionary<Guid, BinanceWebSocket>();
+            AllSockets = new List<WebSocketWrapper>();
+            ActiveWebSockets = new Dictionary<Guid, WebSocketWrapper>();
         }
     }
 }

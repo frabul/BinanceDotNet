@@ -10,7 +10,6 @@ using BinanceExchange.API.Models.Request;
 using BinanceExchange.API.Models.Response;
 using BinanceExchange.API.Models.Response.Abstract;
 using BinanceExchange.API.Utility;
-using log4net;
 
 namespace BinanceExchange.API.Client
 {
@@ -39,7 +38,7 @@ namespace BinanceExchange.API.Client
         private readonly IAPIProcessor _apiProcessor;
         private readonly int _defaultReceiveWindow;
         private RequestClient _requestClient;
-        private readonly ILog _logger;
+        private readonly NLog.Logger _logger;
         private ExchangeInfoResponse _ExchangeInfo = null;
         private RateLimiter RateLimiter;
 
@@ -51,7 +50,7 @@ namespace BinanceExchange.API.Client
         /// <param name="apiCache"></param>
         public BinanceClient(ClientConfiguration configuration, IAPIProcessor apiProcessor = null)
         {
-            _logger = configuration.Logger ?? LogManager.GetLogger(typeof(BinanceClient));
+            _logger = configuration.Logger ?? NLog.LogManager.GetCurrentClassLogger();
             Guard.AgainstNull(configuration);
             Guard.AgainstNullOrEmpty(configuration.ApiKey);
             Guard.AgainstNull(configuration.SecretKey);

@@ -4,8 +4,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using BinanceExchange.API.Caching.Interfaces;
 using BinanceExchange.API.Enums;
-using BinanceExchange.API.Models.Response.Error;
-using log4net;
+using BinanceExchange.API.Models.Response.Error; 
 using Newtonsoft.Json;
 
 namespace BinanceExchange.API
@@ -18,13 +17,13 @@ namespace BinanceExchange.API
         private readonly string _apiKey;
         private readonly string _secretKey;
         private IAPICacheManager _apiCache;
-        private ILog _logger;
+        private NLog.Logger _logger;
         private bool _cacheEnabled;
         private TimeSpan _cacheTime;
         private readonly RequestClient _requestClient;
 
         public APIProcessor(string apiKey, string secretKey, IAPICacheManager apiCache, RequestClient requestClient)
-        {
+        { 
             _apiKey = apiKey;
             _secretKey = secretKey;
             if (apiCache != null)
@@ -34,7 +33,7 @@ namespace BinanceExchange.API
             }
 
             _requestClient = requestClient;
-            _logger = LogManager.GetLogger(typeof(APIProcessor));
+            _logger = NLog.LogManager.GetCurrentClassLogger();
             _logger.Debug($"API Processor set up. Cache Enabled={_cacheEnabled}");
         }
 

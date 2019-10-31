@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using BinanceExchange.API.Caching.Interfaces;
-using BinanceExchange.API.Utility;
-using Microsoft.Extensions.Caching.Memory;
+using BinanceExchange.API.Utility; 
 
 namespace BinanceExchange.API.Caching
 {
@@ -11,16 +10,14 @@ namespace BinanceExchange.API.Caching
     /// </summary>
     public class APICacheManager : IAPICacheManager
     {
-        private readonly object _lockObject = new object();
-        private readonly MemoryCache _cache;
+        private readonly object _lockObject = new object(); 
         private readonly IList<string> _cacheKeysList;
 
         private TimeSpan _defaultExpiryTimespan = new TimeSpan(0, 30, 0);
 
         public APICacheManager()
         {
-            _cache = new MemoryCache(new MemoryCacheOptions());
-            _cacheKeysList = new List<string>();
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -43,7 +40,7 @@ namespace BinanceExchange.API.Caching
             {
                 if (Contains(key.ToLower())) return;
                 _cacheKeysList.Add(key.ToLower());
-                _cache.Set(key.ToLower(), obj, new DateTimeOffset(DateTime.UtcNow.Add(expiry)));
+                throw new NotImplementedException();
             }
         }
 
@@ -55,8 +52,7 @@ namespace BinanceExchange.API.Caching
         /// <returns></returns>
         public T Get<T>(string key) where T : class
         {
-            var cachedItem = _cache.Get(key.ToLower());
-            return cachedItem as T;
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -70,7 +66,7 @@ namespace BinanceExchange.API.Caching
             {
                 return false;
             }
-            return _cache.Get(key.ToLower()) != null;
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -84,7 +80,7 @@ namespace BinanceExchange.API.Caching
             {
                 if (Contains(key.ToLower()))
                 {
-                    _cache.Remove(key.ToLower());
+                    throw new NotImplementedException();
                 }
             }
         }

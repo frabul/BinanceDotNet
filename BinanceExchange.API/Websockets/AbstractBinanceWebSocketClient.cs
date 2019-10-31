@@ -8,9 +8,7 @@ using BinanceExchange.API.Enums;
 using BinanceExchange.API.Extensions;
 using BinanceExchange.API.Models.WebSocket;
 using BinanceExchange.API.Utility;
-using log4net;
-using Newtonsoft.Json;
-using WebSocketSharp;
+using Newtonsoft.Json; 
 using IWebSocketResponse = BinanceExchange.API.Models.WebSocket.Interfaces.IWebSocketResponse;
 
 namespace BinanceExchange.API.Websockets
@@ -38,19 +36,19 @@ namespace BinanceExchange.API.Websockets
         protected Dictionary<Guid, BinanceWebSocket> ActiveWebSockets;
         protected List<BinanceWebSocket> AllSockets;
         protected readonly IBinanceClient BinanceClient;
-        protected ILog Logger;
+        protected NLog.Logger Logger;
 
         protected const string AccountEventType = "outboundAccountInfo";
         protected const string OutboundAccountPosition = "outboundAccountPosition";
         protected const string OrderTradeEventType = "executionReport";
         protected const string ListStatus = "listStatus";
 
-        public AbstractBinanceWebSocketClient(IBinanceClient binanceClient, ILog logger = null)
+        public AbstractBinanceWebSocketClient(IBinanceClient binanceClient, NLog.Logger logger = null)
         {
             BinanceClient = binanceClient;
             ActiveWebSockets = new Dictionary<Guid, BinanceWebSocket>();
             AllSockets = new List<BinanceWebSocket>();
-            Logger = logger ?? LogManager.GetLogger(typeof(AbstractBinanceWebSocketClient));
+            Logger = logger ?? NLog.LogManager.GetCurrentClassLogger();
         }
 
 
@@ -68,7 +66,7 @@ namespace BinanceExchange.API.Websockets
             var endpoint = new Uri($"{BaseWebsocketUri}/{symbol.ToLower()}@kline_{EnumExtensions.GetEnumMemberValue(interval)}");
             return CreateBinanceWebSocket(endpoint, messageEventHandler);
         }
-         
+
         /// <summary>
         /// Connect to the Depth WebSocket
         /// </summary>
@@ -154,28 +152,26 @@ namespace BinanceExchange.API.Websockets
             var streamResponse = await BinanceClient.StartUserDataStream();
 
             var endpoint = new Uri($"{BaseWebsocketUri}/{streamResponse.ListenKey}");
-            return CreateUserDataBinanceWebSocket(endpoint, streamResponse.ListenKey, userDataMessageHandlers);
+            return CreateUserDataBinanceWebSocketAsync(endpoint, streamResponse.ListenKey, userDataMessageHandlers);
         }
 
-        private Guid CreateUserDataBinanceWebSocket(Uri endpoint, string listenKey, UserDataWebSocketMessages userDataWebSocketMessages)
+        private async Task<Guid> CreateUserDataBinanceWebSocketAsync(Uri endpoint, string listenKey, UserDataWebSocketMessages userDataWebSocketMessages)
         {
-            var websocket = new BinanceWebSocket(endpoint.AbsoluteUri, listenKey);
-            websocket.OnOpen += (sender, e) =>
-            {
-                Logger.Debug($"WebSocket Opened:{endpoint.AbsoluteUri}");
-            };
-            websocket.OnMessage += (sender, e) =>
+
+            var websocket = new BinanceWebSocket(  listenKey);
+
+            Action<WebSocketWrapper, string> onMsg = (sender, msg) =>
             {
                 Logger.Debug($"WebSocket Message Received on Endpoint: {endpoint.AbsoluteUri}");
-                var primitive = JsonConvert.DeserializeObject<BinanceWebSocketResponse>(e.Data);
+                var primitive = JsonConvert.DeserializeObject<BinanceWebSocketResponse>(msg);
                 switch (primitive.EventType)
                 {
                     case AccountEventType:
-                        var userData = JsonConvert.DeserializeObject<BinanceAccountUpdateData>(e.Data);
+                        var userData = JsonConvert.DeserializeObject<BinanceAccountUpdateData>(msg);
                         userDataWebSocketMessages.AccountUpdateMessageHandler(userData);
                         break;
                     case OrderTradeEventType:
-                        var orderTradeData = JsonConvert.DeserializeObject<BinanceTradeOrderData>(e.Data);
+                        var orderTradeData = JsonConvert.DeserializeObject<BinanceTradeOrderData>(msg);
                         if (orderTradeData.ExecutionType == ExecutionType.Trade)
                         {
                             userDataWebSocketMessages.TradeUpdateMessageHandler(orderTradeData);
@@ -195,45 +191,29 @@ namespace BinanceExchange.API.Websockets
                         throw new ArgumentOutOfRangeException("Unknown EventType for user data stream");
                 }
             };
-            websocket.OnError += (sender, e) =>
-            {
-                Logger.Error($"WebSocket Error on {endpoint.AbsoluteUri}: ", e.Exception);
-                CloseWebSocketInstance(websocket.Id, true);
-                throw new Exception("Binance UserData WebSocket failed")
-                {
-                    Data =
-                    {
-                        {"ErrorEventArgs", e}
-                    }
-                };
-            };
-
+             
             if (!ActiveWebSockets.ContainsKey(websocket.Id))
             {
                 ActiveWebSockets.Add(websocket.Id, websocket);
             }
-
+            await websocket.ConnectAsync(endpoint, onMsg);
             AllSockets.Add(websocket);
-            websocket.SslConfiguration.EnabledSslProtocols = SupportedProtocols;
-            websocket.Connect();
-
+           
             return websocket.Id;
         }
 
         private Guid CreateBinanceWebSocket<T>(Uri endpoint, BinanceWebSocketMessageHandler<T> messageEventHandler) where T : IWebSocketResponse
         {
-            var websocket = new BinanceWebSocket(endpoint.AbsoluteUri);
-            //websocket.Log.Level = (LogLevel)(LogLevel.Fatal + 1);
-            websocket.OnOpen += (sender, e) =>
+            var websocket = new WebSocketWrapper();
+            websocket.ConnectAsync(endpoint.AbsoluteUri);
+            Logger.Debug($"WebSocket Messge Received on: {endpoint.AbsoluteUri}");
+            //TODO: Log message received
+            var data = JsonConvert.DeserializeObject<T>(e.Data);
+            messageEventHandler(data);
+
+           var  (sender, e) =>
             {
-                Logger.Debug($"WebSocket Opened:{endpoint.AbsoluteUri}");
-            };
-            websocket.OnMessage += (sender, e) =>
-            {
-                Logger.Debug($"WebSocket Messge Received on: {endpoint.AbsoluteUri}");
-                //TODO: Log message received
-                var data = JsonConvert.DeserializeObject<T>(e.Data);
-                messageEventHandler(data);
+              
             };
             websocket.OnError += (sender, e) =>
             {
@@ -274,7 +254,7 @@ namespace BinanceExchange.API.Websockets
                 ActiveWebSockets.Remove(id);
                 if (!fromError)
                 {
-                    try { ws.Close(); }
+                    try { ws.CloseAsync(); }
                     catch { }
                 }
                 if (ws.ListenKey != null)
