@@ -160,7 +160,7 @@ namespace BinanceExchange.API.Websockets
 
             Action<WebSocketWrapper, string> onMsg = (sender, msg) =>
             {
-                Logger.Debug($"WebSocket Message Received on Endpoint: {endpoint.AbsoluteUri}");
+                Logger.Trace($"WebSocket Message Received on Endpoint: {endpoint.AbsoluteUri}");
                 var primitive = JsonConvert.DeserializeObject<BinanceWebSocketResponse>(msg);
                 switch (primitive.EventType)
                 {
@@ -186,6 +186,7 @@ namespace BinanceExchange.API.Websockets
                         //todo
                         break;
                     default:
+                        Logger.Error("Unknown EventType for user data stream");
                         throw new ArgumentOutOfRangeException("Unknown EventType for user data stream");
                 }
             };
