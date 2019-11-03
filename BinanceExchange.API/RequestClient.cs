@@ -47,7 +47,7 @@ namespace BinanceExchange.API
         public void SetTimestampOffset(TimeSpan time)
         {
             _timestampOffset = time;
-            _logger.Debug($"Timestamp offset is now : {time}");
+            _logger.Trace($"Timestamp offset is now : {time}");
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace BinanceExchange.API
         /// <returns></returns>
         public async Task<HttpResponseMessage> GetRequest(Uri endpoint)
         {
-            _logger.Debug($"Creating a GET Request to {endpoint.AbsoluteUri}");
+            _logger.Trace($"Creating a GET Request to {endpoint.AbsoluteUri}");
             return await CreateRequest(endpoint);
         }
 
@@ -91,9 +91,9 @@ namespace BinanceExchange.API
         /// <returns></returns>
         public async Task<HttpResponseMessage> SignedGetRequest(Uri endpoint, string apiKey, string secretKey, string signatureRawData, long receiveWindow = 5000)
         {
-            _logger.Debug($"Creating a SIGNED GET Request to {endpoint.AbsoluteUri}");
+            _logger.Trace($"Creating a SIGNED GET Request to {endpoint.AbsoluteUri}");
             var uri = CreateValidUri(endpoint, secretKey, signatureRawData, receiveWindow);
-            _logger.Debug($"Concat URL for request: {uri.AbsoluteUri}");
+            _logger.Trace($"Concat URL for request: {uri.AbsoluteUri}");
             return await CreateRequest(uri, HttpVerb.GET);
         }
 
@@ -104,7 +104,7 @@ namespace BinanceExchange.API
         /// <returns></returns>
         public async Task<HttpResponseMessage> PostRequest(Uri endpoint)
         {
-            _logger.Debug($"Creating a POST Request to {endpoint.AbsoluteUri}");
+            _logger.Trace($"Creating a POST Request to {endpoint.AbsoluteUri}");
             return await CreateRequest(endpoint, HttpVerb.POST);
         }
 
@@ -115,7 +115,7 @@ namespace BinanceExchange.API
         /// <returns></returns>
         public async Task<HttpResponseMessage> DeleteRequest(Uri endpoint)
         {
-            _logger.Debug($"Creating a DELETE Request to {endpoint.AbsoluteUri}");
+            _logger.Trace($"Creating a DELETE Request to {endpoint.AbsoluteUri}");
             return await CreateRequest(endpoint, HttpVerb.DELETE);
         }
 
@@ -126,7 +126,7 @@ namespace BinanceExchange.API
         /// <returns></returns>
         public async Task<HttpResponseMessage> PutRequest(Uri endpoint)
         {
-            _logger.Debug($"Creating a PUT Request to {endpoint.AbsoluteUri}");
+            _logger.Trace($"Creating a PUT Request to {endpoint.AbsoluteUri}");
             return await CreateRequest(endpoint, HttpVerb.PUT);
         }
 
@@ -141,7 +141,7 @@ namespace BinanceExchange.API
         /// <returns></returns>
         public async Task<HttpResponseMessage> SignedPostRequest(Uri endpoint, string apiKey, string secretKey, string signatureRawData, long receiveWindow = 5000)
         {
-            _logger.Debug($"Creating a SIGNED POST Request to {endpoint.AbsoluteUri}");
+            _logger.Trace($"Creating a SIGNED POST Request to {endpoint.AbsoluteUri}");
             var uri = CreateValidUri(endpoint, secretKey, signatureRawData, receiveWindow);
             return await CreateRequest(uri, HttpVerb.POST);
         }
@@ -157,7 +157,7 @@ namespace BinanceExchange.API
         /// <returns></returns>
         public async Task<HttpResponseMessage> SignedDeleteRequest(Uri endpoint, string apiKey, string secretKey, string signatureRawData, long receiveWindow = 5000)
         {
-            _logger.Debug($"Creating a SIGNED DELETE Request to {endpoint.AbsoluteUri}");
+            _logger.Trace($"Creating a SIGNED DELETE Request to {endpoint.AbsoluteUri}");
             var uri = CreateValidUri(endpoint, secretKey, signatureRawData, receiveWindow);
             return await CreateRequest(uri, HttpVerb.DELETE);
         }

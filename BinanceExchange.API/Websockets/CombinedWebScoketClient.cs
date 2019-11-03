@@ -7,10 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.WebSockets;
-using System.Security.Authentication;
-using System.Text; 
-using System.Timers;
+using System.Threading.Tasks;
 
 namespace BinanceExchange.API.Websockets
 {
@@ -18,35 +15,28 @@ namespace BinanceExchange.API.Websockets
     {
         private int StreamsPerSocket = 20;
         private string CombinedWebsocketUri = "wss://stream.binance.com:9443/stream?streams=";
-        private SslProtocols SupportedProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
         private Dictionary<string, SockStream> Streams = new Dictionary<string, SockStream>();
-
         private List<CombinedWebSocket> ActiveWebSockets = new List<CombinedWebSocket>();
-        private Timer RefreshTimer;
         private DateTime NextRebuildTime = DateTime.MinValue;
+        private NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
         public CombinedWebSocketClient()
         {
-            RefreshTimer = new Timer()
-            {
-                Interval = 1000,
-                AutoReset = false,
-                Enabled = true,
-
-            };
-            RefreshTimer.Elapsed += RefreshTimer_Elapsed;
-            RefreshTimer.Start();
+            _ = WebSocketsRefresher();
         }
 
-        private void RefreshTimer_Elapsed(object sender, ElapsedEventArgs e)
+        private async Task WebSocketsRefresher()
         {
-            if (DateTime.Now > NextRebuildTime)
+            while (true)
             {
-                NextRebuildTime = NextRebuildTime.AddSeconds(30);
-                try { RebuildSocketsAsync(); }
-                catch { }
+                if (DateTime.Now > NextRebuildTime)
+                {
+                    NextRebuildTime = NextRebuildTime.AddSeconds(30);
+                    try { _ = RebuildSocketsAsync(); }
+                    catch { }
+                }
+                await Task.Delay(1000);
             }
-            RefreshTimer.Start();
         }
 
         public void Unsubscribe<T>(Action<T> action)
@@ -89,7 +79,7 @@ namespace BinanceExchange.API.Websockets
 
         }
 
-        private async System.Threading.Tasks.Task RebuildSocketsAsync()
+        private async Task RebuildSocketsAsync()
         {
             //close sockets older than 6h or that are not responsive
             CombinedWebSocket[] socks;
@@ -97,11 +87,14 @@ namespace BinanceExchange.API.Websockets
                 socks = ActiveWebSockets.ToArray();
             foreach (var sock in socks)
             {
-                bool needClose = !(sock.WatchDog.Elapsed > TimeSpan.FromSeconds(70) || DateTime.Now > sock.CreationTime.AddHours(2));
-                if (DateTime.Now > sock.LastPing.AddMinutes(20))
-                    needClose &= sock.Ping();
-                if (needClose)
+                bool sockWatchDogFail = sock.WatchDog.Elapsed > TimeSpan.FromSeconds(30);
+                bool sockIsOld = DateTime.Now > sock.CreationTime.AddHours(2);
+
+                if (sockWatchDogFail || sockIsOld || !sock.IsAlive)
+                {
+                    Logger.Debug($"A combined websocket needs to be closed: sockWatchDogFail={sockWatchDogFail}, sockIsOld={sockIsOld}, Disconnected={sock.IsDisocnnected}  "); 
                     CloseSocket(sock);
+                } 
             }
 
             //check that all streams have a socket
@@ -111,11 +104,13 @@ namespace BinanceExchange.API.Websockets
                 lock (Streams)
                     streamsWithNoSocket = new Queue<SockStream>(Streams.Values.Where(st => !ActiveWebSockets.Any(sock => sock.Streams.Any(ss => ss == st))).ToArray());
             }
+
             while (streamsWithNoSocket.Count > 0)
             {
                 CombinedWebSocket sockToRebuild;
                 lock (ActiveWebSockets)
                     sockToRebuild = ActiveWebSockets.FirstOrDefault(s => s.Streams.Length < StreamsPerSocket);
+
                 List<SockStream> streamsForSocket = new List<SockStream>();
                 if (sockToRebuild != null)
                 {
@@ -141,7 +136,7 @@ namespace BinanceExchange.API.Websockets
 
         }
 
-        private async System.Threading.Tasks.Task OpenWebSocketAsync(SockStream[] streamsPerSocket)
+        private async Task OpenWebSocketAsync(SockStream[] streamsPerSocket)
         {
             string endpoint = this.CombinedWebsocketUri;
             foreach (var str in streamsPerSocket)
@@ -149,14 +144,8 @@ namespace BinanceExchange.API.Websockets
                 endpoint += str.SockName + "/";
             }
             endpoint = endpoint.Remove(endpoint.Length - 1);
-            var websocket = new CombinedWebSocket( );
+            var websocket = new CombinedWebSocket();
             websocket.Streams = streamsPerSocket;
-          
-            //websocket.Log.Level = (LogLevel)(LogLevel.Fatal + 1);
-            //websocket.OnOpen += (sender, e) =>
-            //{
-            //    websocket.WatchDog.Restart();
-            //};
             Action<WebSocketWrapper, string> onMsg = (sender, msg) =>
             {
                 try
@@ -175,10 +164,11 @@ namespace BinanceExchange.API.Websockets
                 }
                 catch { }
             };
-            await websocket.ConnectAsync(endpoint, onMsg).ContinueWith(firstTask => websocket.WatchDog.Restart());
+
+            await websocket.ConnectAsync(endpoint, onMsg);
             websocket.WatchDog.Restart();
             lock (ActiveWebSockets)
-                ActiveWebSockets.Add(websocket);  
+                ActiveWebSockets.Add(websocket);
         }
 
         private void CloseSocket(CombinedWebSocket sock)
@@ -188,7 +178,7 @@ namespace BinanceExchange.API.Websockets
                 if (ActiveWebSockets.Contains(sock))
                 {
                     ActiveWebSockets.Remove(sock);
-                    try {   sock.CloseAsync(); }
+                    try { _ = sock.CloseAsync(); }
                     catch { }
                 }
             }
@@ -242,7 +232,7 @@ namespace BinanceExchange.API.Websockets
 
         }
 
-    
+
 
         class CombinedWebSocket : WebSocketWrapper
         {
@@ -253,8 +243,8 @@ namespace BinanceExchange.API.Websockets
             public DateTime LastPing;
             public CombinedWebSocket()
             {
-                LastPing = DateTime.Now; 
-            } 
+                LastPing = DateTime.Now;
+            }
         }
     }
 

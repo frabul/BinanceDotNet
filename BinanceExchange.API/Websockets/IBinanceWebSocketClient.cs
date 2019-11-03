@@ -14,7 +14,7 @@ namespace BinanceExchange.API.Websockets
         /// <param name="interval"></param>
         /// <param name="messageEventHandler"></param>
         /// <returns></returns>
-        Guid ConnectToKlineWebSocket(string symbol, KlineInterval interval, BinanceWebSocketMessageHandler<BinanceKlineData> messageEventHandler);
+        Task<Guid> ConnectToKlineWebSocketAsync(string symbol, KlineInterval interval, BinanceWebSocketMessageHandler<BinanceKlineData> messageEventHandler);
 
         /// <summary>
         /// Connect to the Depth WebSocket
@@ -22,7 +22,7 @@ namespace BinanceExchange.API.Websockets
         /// <param name="symbol"></param>
         /// <param name="messageEventHandler"></param>
         /// <returns></returns>
-        Guid ConnectToDepthWebSocket(string symbol, BinanceWebSocketMessageHandler<BinanceDepthData> messageEventHandler);
+        Task<Guid> ConnectToDepthWebSocketAsync(string symbol, BinanceWebSocketMessageHandler<BinanceDepthData> messageEventHandler);
 
         /// <summary>
         /// Connect to the Trades WebSocket
@@ -30,7 +30,7 @@ namespace BinanceExchange.API.Websockets
         /// <param name="symbol"></param>
         /// <param name="messageEventHandler"></param>
         /// <returns></returns>
-        Guid ConnectToTradesWebSocket(string symbol, BinanceWebSocketMessageHandler<BinanceAggregateTradeData> messageEventHandler);
+        Task<Guid> ConnectToTradesWebSocketAsync(string symbol, BinanceWebSocketMessageHandler<BinanceAggregateTradeData> messageEventHandler);
 
         /// <summary>
         /// Connect to the UserData WebSocket

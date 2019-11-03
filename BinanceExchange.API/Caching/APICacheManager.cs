@@ -1,7 +1,7 @@
-﻿using System;
+﻿using BinanceExchange.API.Caching.Interfaces;
+using BinanceExchange.API.Utility;
+using System;
 using System.Collections.Generic;
-using BinanceExchange.API.Caching.Interfaces;
-using BinanceExchange.API.Utility; 
 
 namespace BinanceExchange.API.Caching
 {
@@ -10,14 +10,13 @@ namespace BinanceExchange.API.Caching
     /// </summary>
     public class APICacheManager : IAPICacheManager
     {
-        private readonly object _lockObject = new object(); 
+        private readonly object _lockObject = new object();
         private readonly IList<string> _cacheKeysList;
-
         private TimeSpan _defaultExpiryTimespan = new TimeSpan(0, 30, 0);
 
         public APICacheManager()
         {
-            throw new NotImplementedException();
+            _cacheKeysList = new List<string>(); 
         }
 
         /// <summary>
@@ -27,21 +26,9 @@ namespace BinanceExchange.API.Caching
         /// <param name="obj">The object to add</param>
         /// <param name="key">The key to identify the cache entry</param>
         /// <param name="expiry">When the cache should expire</param>
-        public void Add<T>(T obj, string key, TimeSpan expiry = default(TimeSpan)) where T : class
+        public void Add<T>(T obj, string key, TimeSpan expiry = default) where T : class
         {
-            Guard.AgainstNullOrEmpty(key);
-            if (expiry == default(TimeSpan))
-            {
-                expiry = _defaultExpiryTimespan;
-            }
-
-            if (Contains(key)) return;
-            lock (_lockObject)
-            {
-                if (Contains(key.ToLower())) return;
-                _cacheKeysList.Add(key.ToLower());
-                throw new NotImplementedException();
-            }
+           
         }
 
         /// <summary>
@@ -52,7 +39,7 @@ namespace BinanceExchange.API.Caching
         /// <returns></returns>
         public T Get<T>(string key) where T : class
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         /// <summary>
@@ -66,7 +53,7 @@ namespace BinanceExchange.API.Caching
             {
                 return false;
             }
-            throw new NotImplementedException();
+            return false;
         }
 
         /// <summary>
@@ -92,10 +79,10 @@ namespace BinanceExchange.API.Caching
         {
             foreach (var key in _cacheKeysList)
             {
-                Guard.AgainstNullOrEmpty(key);
-
+                Guard.AgainstNullOrEmpty(key); 
                 Remove(key);
             }
         }
     }
+ 
 }

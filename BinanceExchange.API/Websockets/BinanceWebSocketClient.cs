@@ -16,7 +16,7 @@ namespace BinanceExchange.API.Websockets
     /// <summary>
     /// Abstract class for creating WebSocketClients 
     /// </summary>
-    public class AbstractBinanceWebSocketClient
+    public class BinanceWebSocketClient
     {
         protected SslProtocols SupportedProtocols { get; } = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
 
@@ -33,8 +33,7 @@ namespace BinanceExchange.API.Websockets
         /// <summary>
         /// Used for deletion on the fly
         /// </summary>
-        protected Dictionary<Guid, BinanceWebSocket> ActiveWebSockets;
-        protected List<BinanceWebSocket> AllSockets;
+        protected Dictionary<Guid, BinanceWebSocket> ActiveWebSockets; 
         protected readonly IBinanceClient BinanceClient;
         protected NLog.Logger Logger;
 
@@ -43,11 +42,10 @@ namespace BinanceExchange.API.Websockets
         protected const string OrderTradeEventType = "executionReport";
         protected const string ListStatus = "listStatus";
 
-        public AbstractBinanceWebSocketClient(IBinanceClient binanceClient, NLog.Logger logger = null)
+        public BinanceWebSocketClient(IBinanceClient binanceClient, NLog.Logger logger = null)
         {
             BinanceClient = binanceClient;
-            ActiveWebSockets = new Dictionary<Guid, BinanceWebSocket>();
-            AllSockets = new List<BinanceWebSocket>();
+            ActiveWebSockets = new Dictionary<Guid, BinanceWebSocket>(); 
             Logger = logger ?? NLog.LogManager.GetCurrentClassLogger();
         }
 
@@ -59,12 +57,12 @@ namespace BinanceExchange.API.Websockets
         /// <param name="interval"></param>
         /// <param name="messageEventHandler"></param>
         /// <returns></returns>
-        public Guid ConnectToKlineWebSocket(string symbol, KlineInterval interval, BinanceWebSocketMessageHandler<BinanceKlineData> messageEventHandler)
+        public async Task<Guid> ConnectToKlineWebSocketAsync(string symbol, KlineInterval interval, BinanceWebSocketMessageHandler<BinanceKlineData> messageEventHandler)
         {
             Guard.AgainstNullOrEmpty(symbol, nameof(symbol));
             Logger.Debug("Connecting to Kline Web Socket");
             var endpoint = new Uri($"{BaseWebsocketUri}/{symbol.ToLower()}@kline_{EnumExtensions.GetEnumMemberValue(interval)}");
-            return CreateBinanceWebSocket(endpoint, messageEventHandler);
+            return await CreateBinanceWebSocketAsync(endpoint, messageEventHandler);
         }
 
         /// <summary>
@@ -73,12 +71,12 @@ namespace BinanceExchange.API.Websockets
         /// <param name="symbol"></param>
         /// <param name="messageEventHandler"></param>
         /// <returns></returns>
-        public Guid ConnectToDepthWebSocket(string symbol, BinanceWebSocketMessageHandler<BinanceDepthData> messageEventHandler)
+        public async Task<Guid> ConnectToDepthWebSocketAsync(string symbol, BinanceWebSocketMessageHandler<BinanceDepthData> messageEventHandler)
         {
             Guard.AgainstNullOrEmpty(symbol, nameof(symbol));
             Logger.Debug("Connecting to Depth Web Socket");
             var endpoint = new Uri($"{BaseWebsocketUri}/{symbol.ToLower()}@depth");
-            return CreateBinanceWebSocket(endpoint, messageEventHandler);
+            return await CreateBinanceWebSocketAsync(endpoint, messageEventHandler);
         }
 
         /// <summary>
@@ -87,12 +85,12 @@ namespace BinanceExchange.API.Websockets
         /// <param name="symbol"></param>
         /// <param name="messageEventHandler"></param>
         /// <returns></returns>
-        public Guid ConnectToPartialDepthWebSocket(string symbol, PartialDepthLevels levels, BinanceWebSocketMessageHandler<BinancePartialData> messageEventHandler)
+        public async Task<Guid> ConnectToPartialDepthWebSocketAsync(string symbol, PartialDepthLevels levels, BinanceWebSocketMessageHandler<BinancePartialData> messageEventHandler)
         {
             Guard.AgainstNullOrEmpty(symbol, nameof(symbol));
             Logger.Debug("Connecting to Partial Depth Web Socket");
             var endpoint = new Uri($"{BaseWebsocketUri}/{symbol.ToLower()}@depth{(int)levels}");
-            return CreateBinanceWebSocket(endpoint, messageEventHandler);
+            return await CreateBinanceWebSocketAsync(endpoint, messageEventHandler);
         }
 
         /// <summary>
@@ -101,13 +99,13 @@ namespace BinanceExchange.API.Websockets
         /// <param name="symbols"></param>
         /// <param name="messageEventHandler"></param>
         /// <returns></returns>
-        public Guid ConnectToDepthWebSocketCombined(string symbols, BinanceWebSocketMessageHandler<BinanceCombinedDepthData> messageEventHandler)
+        public async Task<Guid> ConnectToDepthWebSocketCombinedAsync(string symbols, BinanceWebSocketMessageHandler<BinanceCombinedDepthData> messageEventHandler)
         {
             Guard.AgainstNullOrEmpty(symbols, nameof(symbols));
             symbols = PrepareCombinedSymbols.CombinedDepth(symbols);
             Logger.Debug("Connecting to Combined Depth Web Socket");
             var endpoint = new Uri($"{CombinedWebsocketUri}={symbols}");
-            return CreateBinanceWebSocket(endpoint, messageEventHandler);
+            return await CreateBinanceWebSocketAsync(endpoint, messageEventHandler);
         }
         /// <summary>
         /// Connect to the Combined Partial Depth WebSocket
@@ -116,14 +114,14 @@ namespace BinanceExchange.API.Websockets
         /// <param name="depth"></param>
         /// <param name="messageEventHandler"></param>
         /// <returns></returns>
-        public Guid ConnectToPartialDepthWebSocketCombined(string symbols, string depth, BinanceWebSocketMessageHandler<BinancePartialDepthData> messageEventHandler)
+        public async Task<Guid> ConnectToPartialDepthWebSocketCombinedAsync(string symbols, string depth, BinanceWebSocketMessageHandler<BinancePartialDepthData> messageEventHandler)
         {
             Guard.AgainstNullOrEmpty(symbols, nameof(symbols));
             Guard.AgainstNullOrEmpty(depth, nameof(depth));
             symbols = PrepareCombinedSymbols.CombinedPartialDepth(symbols, depth);
             Logger.Debug("Connecting to Combined Partial Depth Web Socket");
             var endpoint = new Uri($"{CombinedWebsocketUri}={symbols}");
-            return CreateBinanceWebSocket(endpoint, messageEventHandler);
+            return await CreateBinanceWebSocketAsync(endpoint, messageEventHandler);
         }
 
         /// <summary>
@@ -132,12 +130,12 @@ namespace BinanceExchange.API.Websockets
         /// <param name="symbol"></param>
         /// <param name="messageEventHandler"></param>
         /// <returns></returns>https://github.com/glitch100/BinanceDotNet/issues
-        public Guid ConnectToTradesWebSocket(string symbol, BinanceWebSocketMessageHandler<BinanceAggregateTradeData> messageEventHandler)
+        public async Task<Guid> ConnectToTradesWebSocketAsync(string symbol, BinanceWebSocketMessageHandler<BinanceAggregateTradeData> messageEventHandler)
         {
             Guard.AgainstNullOrEmpty(symbol, nameof(symbol));
             Logger.Debug("Connecting to Trades Web Socket");
             var endpoint = new Uri($"{BaseWebsocketUri}/{symbol.ToLower()}@aggTrade");
-            return CreateBinanceWebSocket(endpoint, messageEventHandler);
+            return await CreateBinanceWebSocketAsync(endpoint, messageEventHandler);
         }
 
         /// <summary>
@@ -152,7 +150,7 @@ namespace BinanceExchange.API.Websockets
             var streamResponse = await BinanceClient.StartUserDataStream();
 
             var endpoint = new Uri($"{BaseWebsocketUri}/{streamResponse.ListenKey}");
-            return CreateUserDataBinanceWebSocketAsync(endpoint, streamResponse.ListenKey, userDataMessageHandlers);
+            return await CreateUserDataBinanceWebSocketAsync(endpoint, streamResponse.ListenKey, userDataMessageHandlers);
         }
 
         private async Task<Guid> CreateUserDataBinanceWebSocketAsync(Uri endpoint, string listenKey, UserDataWebSocketMessages userDataWebSocketMessages)
@@ -196,47 +194,30 @@ namespace BinanceExchange.API.Websockets
             {
                 ActiveWebSockets.Add(websocket.Id, websocket);
             }
-            await websocket.ConnectAsync(endpoint, onMsg);
-            AllSockets.Add(websocket);
+            await websocket.ConnectAsync(endpoint, onMsg); 
            
             return websocket.Id;
         }
 
-        private Guid CreateBinanceWebSocket<T>(Uri endpoint, BinanceWebSocketMessageHandler<T> messageEventHandler) where T : IWebSocketResponse
+        private async Task<Guid> CreateBinanceWebSocketAsync<T>(Uri endpoint, BinanceWebSocketMessageHandler<T> messageEventHandler) where T : IWebSocketResponse
         {
-            var websocket = new WebSocketWrapper();
-            websocket.ConnectAsync(endpoint.AbsoluteUri);
-            Logger.Debug($"WebSocket Messge Received on: {endpoint.AbsoluteUri}");
-            //TODO: Log message received
-            var data = JsonConvert.DeserializeObject<T>(e.Data);
-            messageEventHandler(data);
+            var websocket = new BinanceWebSocket(); 
 
-           var  (sender, e) =>
+            Action<WebSocketWrapper, string> onRecv = (sender, msg) =>
             {
-              
+                Logger.Debug($"WebSocket Messge Received on: {endpoint.AbsoluteUri}");
+                //TODO: Log message received
+                var data = JsonConvert.DeserializeObject<T>(msg);
+                messageEventHandler(data);
             };
-            websocket.OnError += (sender, e) =>
-            {
-                Logger.Debug($"WebSocket Error on {endpoint.AbsoluteUri}:", e.Exception);
-                CloseWebSocketInstance(websocket.Id, true);
-                //throw new Exception("Binance WebSocket failed")
-                //{
-                //    Data =
-                //    {
-                //        {"ErrorEventArgs", e}
-                //    }
-                //};
-            };
+
+            await websocket.ConnectAsync(endpoint, onRecv); 
 
             if (!ActiveWebSockets.ContainsKey(websocket.Id))
             {
                 ActiveWebSockets.Add(websocket.Id, websocket);
             }
-
-            AllSockets.Add(websocket);
-            websocket.SslConfiguration.EnabledSslProtocols = SupportedProtocols;
-            websocket.Connect();
-
+            
             return websocket.Id;
         }
 
@@ -254,7 +235,7 @@ namespace BinanceExchange.API.Websockets
                 ActiveWebSockets.Remove(id);
                 if (!fromError)
                 {
-                    try { ws.CloseAsync(); }
+                    try { _ = ws.CloseAsync(); }
                     catch { }
                 }
                 if (ws.ListenKey != null)
@@ -294,8 +275,8 @@ namespace BinanceExchange.API.Websockets
             if (ActiveWebSockets.ContainsKey(guid))
             {
                 var ws = ActiveWebSockets[guid];
-                try { return ws.Ping(); }
-                catch { return false; }
+                //todo implement ping 
+                return ws.IsAlive;
             }
             else
             {

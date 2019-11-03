@@ -66,7 +66,7 @@ namespace BinanceExchange.API
                         Message = ex.Message
                     });
                 }
-                _logger.Debug($"Successful Message Response={messageJson}");
+                //_logger.Trace($"Successful Message Response={messageJson}");
 
                 if (messageObject == null)
                 {

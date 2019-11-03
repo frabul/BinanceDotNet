@@ -9,31 +9,37 @@ namespace BinanceExchange.API.Websockets
 {
     public class WebSocketWrapper
     {
-        System.Net.WebSockets.ClientWebSocket Socket;
-        CancellationTokenSource CancelToken = new CancellationTokenSource();
-        Action<WebSocketWrapper, string> OnMessage;
-        byte[] rawBuffer = new byte[100000];
-        public bool Disconnected { get; private set; } = true;
-        public bool IsAlive { get; internal set; } => !Disconnected;
+        private const int ReceiveChunkSize = 10000;
+        private const int SendChunkSize = 1024;
+        private System.Net.WebSockets.ClientWebSocket Socket;
+        private CancellationTokenSource CancelToken = new CancellationTokenSource();
+        private Action<WebSocketWrapper, string> OnMessage;
+        private byte[] rawBuffer = new byte[ReceiveChunkSize];
+
+        public bool IsDisocnnected { get; private set; } = true;
+        public bool IsAlive => !IsDisocnnected;
+
+        public WebSocketWrapper()
+        {
+            Socket = new ClientWebSocket();
+            Socket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20); 
+        }
 
         public async Task ConnectAsync(string url, Action<WebSocketWrapper, string> onMessage)
         {
-            await ConnectAsync( new Uri(url), onMessage);
-        }
-        public async Task ConnectAsync(Uri uri, Action<WebSocketWrapper, string> onMessage)
-        { 
-            await Socket.ConnectAsync(uri, CancelToken.Token);
-            OnMessage = onMessage;
-            Disconnected = false;
-            //start reading messages
-            ReadMessages();
-        }
-     
-        public bool Ping()
-        {
-            return Disconnected;
+            await ConnectAsync(new Uri(url), onMessage);
         }
 
+        public async Task ConnectAsync(Uri uri, Action<WebSocketWrapper, string> onMessage)
+        {
+            await Socket.ConnectAsync(uri, CancelToken.Token);
+            OnMessage = onMessage;
+            IsDisocnnected = false;
+            //start reading messages
+            _ = ReadMessages();
+        }
+
+      
         public async Task ReadMessages()
         {
             try
@@ -78,17 +84,17 @@ namespace BinanceExchange.API.Websockets
 
         private void CallOnDisconnected()
         {
-            Disconnected = true;
+            IsDisocnnected = true;
         }
 
         public async Task CloseAsync()
         {
             try
             {
-                if (!Disconnected)
+                if (!IsDisocnnected)
                 {
                     await Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancelToken.Token);
-                    Socket.Dispose(); 
+                    Socket.Dispose();
                 }
             }
             catch
@@ -98,7 +104,7 @@ namespace BinanceExchange.API.Websockets
             finally
             {
                 CancelToken.Dispose();
-            } 
+            }
         }
 
     }
