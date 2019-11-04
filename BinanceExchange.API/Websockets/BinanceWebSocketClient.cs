@@ -8,7 +8,7 @@ using BinanceExchange.API.Enums;
 using BinanceExchange.API.Extensions;
 using BinanceExchange.API.Models.WebSocket;
 using BinanceExchange.API.Utility;
-using Newtonsoft.Json; 
+using Newtonsoft.Json;
 using IWebSocketResponse = BinanceExchange.API.Models.WebSocket.Interfaces.IWebSocketResponse;
 
 namespace BinanceExchange.API.Websockets
@@ -33,7 +33,7 @@ namespace BinanceExchange.API.Websockets
         /// <summary>
         /// Used for deletion on the fly
         /// </summary>
-        protected Dictionary<Guid, BinanceWebSocket> ActiveWebSockets; 
+        protected Dictionary<Guid, BinanceWebSocket> ActiveWebSockets;
         protected readonly IBinanceClient BinanceClient;
         protected NLog.Logger Logger;
 
@@ -45,7 +45,7 @@ namespace BinanceExchange.API.Websockets
         public BinanceWebSocketClient(IBinanceClient binanceClient, NLog.Logger logger = null)
         {
             BinanceClient = binanceClient;
-            ActiveWebSockets = new Dictionary<Guid, BinanceWebSocket>(); 
+            ActiveWebSockets = new Dictionary<Guid, BinanceWebSocket>();
             Logger = logger ?? NLog.LogManager.GetCurrentClassLogger();
         }
 
@@ -156,9 +156,9 @@ namespace BinanceExchange.API.Websockets
         private async Task<Guid> CreateUserDataBinanceWebSocketAsync(Uri endpoint, string listenKey, UserDataWebSocketMessages userDataWebSocketMessages)
         {
 
-            var websocket = new BinanceWebSocket(  listenKey);
+            var websocket = new BinanceWebSocket(listenKey);
 
-            Action<WebSocketWrapper, string> onMsg = (sender, msg) =>
+            void onMsg(WebSocketWrapper sender, string msg)
             {
                 Logger.Trace($"WebSocket Message Received on Endpoint: {endpoint.AbsoluteUri}");
                 var primitive = JsonConvert.DeserializeObject<BinanceWebSocketResponse>(msg);
@@ -189,64 +189,63 @@ namespace BinanceExchange.API.Websockets
                         Logger.Error("Unknown EventType for user data stream");
                         throw new ArgumentOutOfRangeException("Unknown EventType for user data stream");
                 }
-            };
-             
+            }
+
             if (!ActiveWebSockets.ContainsKey(websocket.Id))
             {
                 ActiveWebSockets.Add(websocket.Id, websocket);
             }
-            await websocket.ConnectAsync(endpoint, onMsg); 
-           
+            await websocket.ConnectAsync(endpoint, onMsg);
+
             return websocket.Id;
         }
 
         private async Task<Guid> CreateBinanceWebSocketAsync<T>(Uri endpoint, BinanceWebSocketMessageHandler<T> messageEventHandler) where T : IWebSocketResponse
         {
-            var websocket = new BinanceWebSocket(); 
+            var websocket = new BinanceWebSocket();
 
-            Action<WebSocketWrapper, string> onRecv = (sender, msg) =>
+            void onRecv(WebSocketWrapper sender, string msg)
             {
                 Logger.Debug($"WebSocket Messge Received on: {endpoint.AbsoluteUri}");
                 //TODO: Log message received
                 var data = JsonConvert.DeserializeObject<T>(msg);
                 messageEventHandler(data);
-            };
+            }
 
-            await websocket.ConnectAsync(endpoint, onRecv); 
+            await websocket.ConnectAsync(endpoint, onRecv);
 
             if (!ActiveWebSockets.ContainsKey(websocket.Id))
             {
                 ActiveWebSockets.Add(websocket.Id, websocket);
             }
-            
+
             return websocket.Id;
         }
 
         /// <summary>
         /// Close a specific WebSocket instance using the Guid provided on creation
         /// If it is a user data stream socket then also the listenKey is closed
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="fromError"></param>
-        public void CloseWebSocketInstance(Guid id, bool fromError = false)
+        /// </summary>  
+        public void CloseWebSocketInstance(Guid id)
         {
-            if (ActiveWebSockets.ContainsKey(id))
+            BinanceWebSocket ws = null;
+            lock (ActiveWebSockets)
             {
-                var ws = ActiveWebSockets[id];
-                ActiveWebSockets.Remove(id);
-                if (!fromError)
+                if (ActiveWebSockets.ContainsKey(id))
                 {
-                    try { _ = ws.CloseAsync(); }
-                    catch { }
+                    ws = ActiveWebSockets[id];
+                    ActiveWebSockets.Remove(id);
                 }
-                if (ws.ListenKey != null)
+                else
                 {
-                    this.BinanceClient.CloseUserDataStream(ws.ListenKey).Start();
+                    throw new Exception($"No Websocket exists with the Id {id.ToString()}");
                 }
             }
-            else
+            try { _ = ws.CloseAsync(); }
+            catch { }
+            if (ws.ListenKey != null)
             {
-                throw new Exception($"No Websocket exists with the Id {id.ToString()}");
+                _ = this.BinanceClient.CloseUserDataStream(ws.ListenKey);
             }
         }
 

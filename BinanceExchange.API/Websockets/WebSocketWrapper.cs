@@ -11,10 +11,10 @@ namespace BinanceExchange.API.Websockets
     {
         private const int ReceiveChunkSize = 10000;
         private const int SendChunkSize = 1024;
-        private System.Net.WebSockets.ClientWebSocket Socket;
-        private CancellationTokenSource CancelToken = new CancellationTokenSource();
+        private readonly ClientWebSocket Socket;
+        private readonly CancellationTokenSource CancelToken = new CancellationTokenSource();
         private Action<WebSocketWrapper, string> OnMessage;
-        private byte[] rawBuffer = new byte[ReceiveChunkSize];
+        private readonly byte[] rawBuffer = new byte[ReceiveChunkSize];
 
         public bool IsDisocnnected { get; private set; } = true;
         public bool IsAlive => !IsDisocnnected;

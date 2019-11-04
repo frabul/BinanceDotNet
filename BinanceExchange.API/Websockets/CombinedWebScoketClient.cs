@@ -3,6 +3,7 @@ using BinanceExchange.API.Extensions;
 using BinanceExchange.API.Models.WebSocket;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,12 +14,13 @@ namespace BinanceExchange.API.Websockets
 {
     public class CombinedWebSocketClient
     {
-        private int StreamsPerSocket = 20;
-        private string CombinedWebsocketUri = "wss://stream.binance.com:9443/stream?streams=";
-        private Dictionary<string, SockStream> Streams = new Dictionary<string, SockStream>();
-        private List<CombinedWebSocket> ActiveWebSockets = new List<CombinedWebSocket>();
+        private readonly int StreamsPerSocket = 20;
+        private readonly string CombinedWebsocketUri = "wss://stream.binance.com:9443/stream?streams=";
+        private readonly Logger Logger = LogManager.GetCurrentClassLogger();
+        private readonly Dictionary<string, SockStream> Streams = new Dictionary<string, SockStream>();
+        private readonly List<CombinedWebSocket> ActiveWebSockets = new List<CombinedWebSocket>();
         private DateTime NextRebuildTime = DateTime.MinValue;
-        private NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
 
         public CombinedWebSocketClient()
         {
@@ -92,9 +94,12 @@ namespace BinanceExchange.API.Websockets
 
                 if (sockWatchDogFail || sockIsOld || !sock.IsAlive)
                 {
-                    Logger.Debug($"A combined websocket needs to be closed: sockWatchDogFail={sockWatchDogFail}, sockIsOld={sockIsOld}, Disconnected={sock.IsDisocnnected}  "); 
+                    Logger.Log(
+                        sockIsOld ? LogLevel.Trace : LogLevel.Debug,
+                        $"A combined websocket needs to be closed: sockWatchDogFail={sockWatchDogFail}, sockIsOld={sockIsOld}, Disconnected={sock.IsDisocnnected}  ");
+
                     CloseSocket(sock);
-                } 
+                }
             }
 
             //check that all streams have a socket
@@ -144,9 +149,8 @@ namespace BinanceExchange.API.Websockets
                 endpoint += str.SockName + "/";
             }
             endpoint = endpoint.Remove(endpoint.Length - 1);
-            var websocket = new CombinedWebSocket();
-            websocket.Streams = streamsPerSocket;
-            Action<WebSocketWrapper, string> onMsg = (sender, msg) =>
+            var websocket = new CombinedWebSocket { Streams = streamsPerSocket };
+            void onMsg(WebSocketWrapper sender, string msg)
             {
                 try
                 {
@@ -163,7 +167,7 @@ namespace BinanceExchange.API.Websockets
                     websocket.WatchDog.Restart();
                 }
                 catch { }
-            };
+            }
 
             await websocket.ConnectAsync(endpoint, onMsg);
             websocket.WatchDog.Restart();

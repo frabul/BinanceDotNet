@@ -43,7 +43,7 @@ namespace BinanceExchange.API.Websockets
         /// Close a specific WebSocket instance using the Guid provided on creation
         /// </summary>
         /// <param name="id"></param>
-        /// <param name="fromError"></param>
-        void CloseWebSocketInstance(Guid id, bool fromError = false);
+        /// 
+        void CloseWebSocketInstance(Guid id);
     }
 }
