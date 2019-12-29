@@ -8,37 +8,27 @@ using BinanceExchange.API.Models.Response.Interfaces;
 using Newtonsoft.Json.Converters;
 
 namespace BinanceExchange.API.Models.Response
-{
-    [DataContract]
+{ 
     public class ExchangeInfoSymbol
     {
-        [DataMember(Order = 1)]
-        public string Symbol { get; set; }
+        public string symbol { get; set; }
+        public string status { get; set; }
+        public string baseAsset { get; set; }
+        public int baseAssetPrecision { get; set; }
+        public string quoteAsset { get; set; }
+        public int quotePrecision { get; set; }
+        public int baseCommissionPrecision { get; set; }
+        public int quoteCommissionPrecision { get; set; }
+        public bool icebergAllowed { get; set; }
+        public bool ocoAllowed { get; set; }
+        public bool quoteOrderQtyMarketAllowed { get; set; }
+        public bool isSpotTradingAllowed { get; set; }
+        public bool isMarginTradingAllowed { get; set; }
 
-        [DataMember(Order = 2)]
-        public string Status { get; set; }
-
-        [DataMember(Order = 3)]
-        public string BaseAsset { get; set; }
-
-        [DataMember(Order = 4)]
-        public int BaseAssetPrecision { get; set; }
-
-        [DataMember(Order = 5)]
-        public string QuoteAsset { get; set; }
-
-        [DataMember(Order = 6)]
-        public int QuotePrecision { get; set; }
-
-        [DataMember(Order = 7)]
         [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
-        public List<ExchangeInfoOrderType> OrderTypes { get; set; }
+        public List<ExchangeInfoOrderType> orderTypes { get; set; }
 
-        [DataMember(Order = 8)]
-        public bool IcebergAllowed { get; set; }
-
-        [DataMember(Order = 9)]
         [JsonProperty(ItemConverterType = typeof(ExchangeInfoSymbolFilterConverter))]
-        public List<ExchangeInfoSymbolFilter> Filters { get; set; }
+        public List<ExchangeInfoSymbolFilter> filters { get; set; }
     }
 }
