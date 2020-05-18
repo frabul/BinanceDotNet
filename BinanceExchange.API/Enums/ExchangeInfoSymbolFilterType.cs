@@ -20,6 +20,8 @@ namespace BinanceExchange.API.Enums
         PercentPrice,
         [EnumMember(Value = "MARKET_LOT_SIZE")]
         MarketLotSize,
+        [EnumMember(Value = "MAX_NUM_ORDERS")]
+        MaxNumOrders, 
         UnknownFilter,
     }
 }

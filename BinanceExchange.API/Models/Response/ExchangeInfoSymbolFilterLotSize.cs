@@ -32,4 +32,11 @@ namespace BinanceExchange.API.Models.Response
         [DataMember(Order = 3)]
         public Decimal StepSize { get; set; }
     }
+
+
+    public class ExchangeInfoSymbolFilterMaxNumOrders : ExchangeInfoSymbolFilter
+    {
+        [JsonProperty("maxNumOrders")]
+        public int MaxNumOrders { get; set; }
+    }
 }
