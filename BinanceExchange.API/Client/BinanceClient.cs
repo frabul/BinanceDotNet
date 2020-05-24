@@ -477,7 +477,7 @@ namespace BinanceExchange.API.Client
             MarxRequestsPerMinute = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "REQUEST_WEIGHT").First().Limit;
             MaxOrdersPerSecond = _ExchangeInfo.RateLimits.Where(rl => rl.RateLimitType == "ORDERS" && rl.Interval == "SECOND").First().Limit;
 
-            RateLimiter = new RateLimiter((int)(MarxRequestsPerMinute * rateLimitFactor), MaxOrdersPerSecond);
+            RateLimiter = new RateLimiter((int)(MarxRequestsPerMinute * rateLimitFactor), (int)(MaxOrdersPerSecond * rateLimitFactor));
             return _ExchangeInfo;
         }
     }
