@@ -10,7 +10,7 @@ namespace BinanceExchange.API.Client
     class RateLimiter
     {
         SemaphoreSlim RqSem = new SemaphoreSlim(1, 1); 
-        SemaphoreSlim OrdersSemaphore; 
+        SemaphoreSlim OrdersQueueSemaphore = new SemaphoreSlim(1, 1);
         Queue<DateTime> RequestsQueue = new Queue<DateTime>();
         Queue<DateTime> OrdersQueue = new Queue<DateTime>();
         int MaxRequestsPerInterval = 0;
@@ -24,8 +24,7 @@ namespace BinanceExchange.API.Client
         {
 
             MaxOrdersPerInterval = ordersPerSecond;
-            OrdersInterval = TimeSpan.FromSeconds(1.1); 
-            OrdersSemaphore = new SemaphoreSlim(ordersPerSecond, ordersPerSecond);
+            OrdersInterval = TimeSpan.FromSeconds(1.1);  
 
             RequestsInterval = TimeSpan.FromMilliseconds(60000 / SubDivision);
             MaxRequestsPerInterval = requestPerMinute / SubDivision;
@@ -70,15 +69,23 @@ namespace BinanceExchange.API.Client
                 return MaxRequestsPerInterval * SubDivision;
         }
          
-        public int GetOrdersRate()
+        public async Task<int> GetOrdersRate()
         {
-            return MaxOrdersPerInterval - OrdersSemaphore.CurrentCount;
+            try
+            {
+                await OrdersQueueSemaphore.WaitAsync();
+                return OrdersQueue.Count;
+            }
+            finally
+            {
+                OrdersQueueSemaphore.Release();
+            }
         }
         public async Task WaitOrder()
         {
             try
             {
-                await OrdersSemaphore.WaitAsync();  
+                await OrdersQueueSemaphore.WaitAsync();  
                 do
                 {
                     //delete orders that have been in the queue long enough
@@ -94,7 +101,7 @@ namespace BinanceExchange.API.Client
             }
             finally
             {
-                OrdersSemaphore.Release();
+                OrdersQueueSemaphore.Release();
             } 
         } 
     }
