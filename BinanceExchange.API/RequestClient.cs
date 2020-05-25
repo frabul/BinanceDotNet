@@ -30,15 +30,13 @@ namespace BinanceExchange.API
             };
             _httpClient = new HttpClient(httpClientHandler);
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _httpClient.Timeout = TimeSpan.FromSeconds(10);
 
 #if NETCORE
-            httpClientHandler.MaxConnectionsPerServer = 200;
+            httpClientHandler.MaxConnectionsPerServer = 500;
 #endif
             _logger = NLog.LogManager.GetCurrentClassLogger();
         }
-
-
-
 
         /// <summary>
         /// Used to adjust the client timestamp
