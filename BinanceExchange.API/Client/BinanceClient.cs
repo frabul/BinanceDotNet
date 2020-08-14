@@ -117,9 +117,17 @@ namespace BinanceExchange.API.Client
         /// Gets weighted requests per minute
         /// </summary>
         /// <returns></returns>
-        public double GetRequestRate()
+        public int GetRequestRate()
         {
             return RateLimiter.GetRequestRate();
+        }
+        /// <summary>
+        /// Gets orders per 24 hours
+        /// </summary>
+        /// <returns></returns>
+        public string GetOrdersRate()
+        {
+            return _apiProcessor.GetOrdersRate();
         }
 
         /// <summary>
@@ -285,7 +293,6 @@ namespace BinanceExchange.API.Client
                 default:
                     return await _apiProcessor.ProcessPostRequest<ResultCreateOrderResponse>(Endpoints.Account.NewOrder(request));
             }
-
         }
 
         /// <summary>
@@ -457,6 +464,7 @@ namespace BinanceExchange.API.Client
             receiveWindow = SetReceiveWindow(receiveWindow);
             return await _apiProcessor.ProcessGetRequest<DepositAddressResponse>(Endpoints.Account.SystemStatus(), receiveWindow);
         }
+
         #endregion
 
         private int SetReceiveWindow(int receiveWindow)

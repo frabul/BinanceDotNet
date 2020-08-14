@@ -46,5 +46,7 @@ namespace BinanceExchange.API
         /// <param name="receiveWindow"></param>
         /// <returns></returns>
         Task<T> ProcessPutRequest<T>(BinanceEndpointData endpoint, int receiveWindow = 5000) where T : class;
+
+        string GetOrdersRate();
     }
 }

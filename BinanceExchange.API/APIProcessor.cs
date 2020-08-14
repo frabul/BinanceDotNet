@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using BinanceExchange.API.Caching.Interfaces;
 using BinanceExchange.API.Enums;
-using BinanceExchange.API.Models.Response.Error; 
+using BinanceExchange.API.Models.Response.Error;
 using Newtonsoft.Json;
 
 namespace BinanceExchange.API
@@ -23,7 +26,7 @@ namespace BinanceExchange.API
         private readonly RequestClient _requestClient;
 
         public APIProcessor(string apiKey, string secretKey, IAPICacheManager apiCache, RequestClient requestClient)
-        { 
+        {
             _apiKey = apiKey;
             _secretKey = secretKey;
             if (apiCache != null)
@@ -46,10 +49,36 @@ namespace BinanceExchange.API
             _cacheTime = time;
         }
 
+
+        private Dictionary<string, string> OrdersRates = new Dictionary<string, string>();
+
+        public string GetOrdersRate()
+        {
+            lock (OrdersRates)
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach (var kv in OrdersRates)
+                {
+                    sb.AppendFormat("{0}: {1}", kv.Key, kv.Value);
+                    sb.AppendLine();
+                }
+                return sb.ToString();
+            }
+        }
+
         private async Task<T> HandleResponse<T>(HttpResponseMessage message, string requestMessage, string fullCacheKey) where T : class
         {
             if (message.IsSuccessStatusCode)
             {
+                //try to catch the order limit
+                foreach (var header in message.Headers)
+                {
+                    if (header.Key.Contains("X-MBX-ORDER-COUNT"))
+                        lock (OrdersRates)
+                            OrdersRates[header.Key] = string.Join(" ", header.Value);
+                }
+
+                //decode message 
                 var messageJson = await message.Content.ReadAsStringAsync();
                 T messageObject = null;
                 try
@@ -88,6 +117,7 @@ namespace BinanceExchange.API
             errorObject.RequestMessage = requestMessage;
             var exception = CreateBinanceException(message.StatusCode, errorObject);
             _logger.Error($"Error Message Received:{errorJson} - {errorObject}", exception);
+
             throw exception;
         }
 
