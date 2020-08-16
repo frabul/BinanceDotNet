@@ -50,20 +50,19 @@ namespace BinanceExchange.API
         }
 
 
-
+        Dictionary<string, string> OrdersRates = new Dictionary<string, string>();
         public string GetOrdersRate()
         {
-            //lock (OrdersRates)
-            //{
-            //    StringBuilder sb = new StringBuilder();
-            //    foreach (var kv in OrdersRates)
-            //    {
-            //        sb.AppendFormat("{0}: {1}", kv.Key, kv.Value);
-            //        sb.AppendLine();
-            //    }
-            //    return sb.ToString();
-            //}
-            return "";
+            lock (OrdersRates)
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach (var kv in OrdersRates)
+                {
+                    sb.AppendFormat("{0}: {1}", kv.Key, kv.Value);
+                    sb.AppendLine();
+                }
+                return sb.ToString();
+            } 
         }
 
         private async Task<T> HandleResponse<T>(HttpResponseMessage message, string requestMessage, string fullCacheKey) where T : class
@@ -71,12 +70,12 @@ namespace BinanceExchange.API
             if (message.IsSuccessStatusCode)
             {
                 //try to catch the order limit
-                //foreach (var header in message.Headers)
-                //{
-                //    if (header.Key.Contains("X-MBX-ORDER-COUNT"))
-                //        lock (OrdersRates)
-                //            OrdersRates[header.Key] = string.Join(" ", header.Value);
-                //}
+                foreach (var header in message.Headers)
+                {
+                    if (header.Key.Contains("x-mbx-order-count"))
+                        lock (OrdersRates)
+                            OrdersRates[header.Key] = string.Join(" ", header.Value);
+                }
 
                 //decode message 
                 var messageJson = await message.Content.ReadAsStringAsync();
