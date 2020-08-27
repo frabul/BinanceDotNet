@@ -180,7 +180,8 @@ namespace BinanceExchange.API.Websockets
                         }
                         break;
                     case OutboundAccountPosition:
-                        //todo
+                        var accountPosition = JsonConvert.DeserializeObject<OutboundAccountPosition>(msg);
+                        userDataWebSocketMessages?.OutboundAccountPositionHandler(accountPosition);
                         break;
                     case ListStatus:
                         //todo
