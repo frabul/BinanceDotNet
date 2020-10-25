@@ -21,7 +21,9 @@ namespace BinanceExchange.API.Enums
         [EnumMember(Value = "MARKET_LOT_SIZE")]
         MarketLotSize,
         [EnumMember(Value = "MAX_NUM_ORDERS")]
-        MaxNumOrders, 
+        MaxNumOrders,
+        [EnumMember(Value = "MAX_POSITION")]
+        MaxPosition,
         UnknownFilter,
     }
 }
