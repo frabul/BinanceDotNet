@@ -93,8 +93,7 @@ namespace BinanceExchange.API.Websockets
             {
                 if (!IsDisocnnected)
                 {
-                    await Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancelToken.Token);
-                    Socket.Dispose();
+                    await Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancelToken.Token); 
                 }
             }
             catch
@@ -103,6 +102,11 @@ namespace BinanceExchange.API.Websockets
             }
             finally
             {
+                try
+                {
+                    Socket.Dispose();
+                }
+                catch { } 
                 CancelToken.Dispose();
             }
         }
