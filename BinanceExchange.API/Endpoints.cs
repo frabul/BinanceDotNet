@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.Serialization;
 using BinanceExchange.API.Converter;
 using BinanceExchange.API.Enums;
 using BinanceExchange.API.Models.Request;
@@ -21,21 +22,18 @@ namespace BinanceExchange.API
             FloatParseHandling = FloatParseHandling.Decimal
         };
 
-        /// <summary>
-        /// Defaults to V1
-        /// </summary>
+        internal static string APIBaseUrl2 = "https://api.binance.com";
 
         /// <summary>
         /// Defaults to API binance domain (https)
         /// </summary>
-        internal static string APIBaseUrl = "https://api.binance.com/api";
 
         /// <summary>
         /// Defaults to WAPI binance domain (https)
         /// </summary>
         internal static string WAPIBaseUrl = "https://api.binance.com/wapi";
 
-        private static string APIPrefix { get; } = $"{APIBaseUrl}";
+        private static string APIPrefix { get; } = "https://api.binance.com/api";
         private static string WAPIPrefix { get; } = $"{WAPIBaseUrl}";
 
         public static class UserStream
@@ -135,7 +133,7 @@ namespace BinanceExchange.API
             /// Best price/qty on the order book for all symbols.
             /// </summary>
             public static BinanceEndpointData SymbolsOrderBookTicker() => new BinanceEndpointData(new Uri($"{APIPrefix}/v3/ticker/bookTicker"), EndpointSecurityType.None);
-           
+
             /// <summary>
             /// Best price/qty on the order book of a single symbol
             /// </summary>
@@ -150,7 +148,7 @@ namespace BinanceExchange.API
             {
                 var queryString = GenerateQueryStringFromData(request);
                 return new BinanceEndpointData(new Uri($"{APIPrefix}/{ApiVersion}/order?{queryString}"), EndpointSecurityType.Signed);
-            }            
+            }
             public static BinanceEndpointData NewOrderTest(CreateOrderRequest request)
             {
                 var queryString = GenerateQueryStringFromData(request);
@@ -216,6 +214,17 @@ namespace BinanceExchange.API
             public static BinanceEndpointData SystemStatus()
             {
                 return new BinanceEndpointData(new Uri($"{WAPIPrefix}/{ApiVersion}/systemStatus.html"), EndpointSecurityType.None);
+            }
+        }
+
+        public static class Margin
+        {
+            public static BinanceEndpointData GetAllCrossMarginAssets() => new BinanceEndpointData(new Uri($"{APIBaseUrl2}/sapi/v1/margin/allAssets"), EndpointSecurityType.ApiKey);
+            public static BinanceEndpointData GetAllCrossMarginPairs() => new BinanceEndpointData(new Uri($"{APIBaseUrl2}/sapi/v1/margin/allPairs"), EndpointSecurityType.ApiKey);
+            public static BinanceEndpointData PostMarginOrder(PostMarginOrderRequest request)
+            {
+                var queryString = GenerateQueryStringFromData(request);
+                return new BinanceEndpointData(new Uri($"{APIBaseUrl2}/sapi/v1/margin/order?{queryString}"), EndpointSecurityType.Signed);
             }
         }
 

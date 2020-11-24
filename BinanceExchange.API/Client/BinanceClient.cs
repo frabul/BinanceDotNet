@@ -465,8 +465,37 @@ namespace BinanceExchange.API.Client
             return await _apiProcessor.ProcessGetRequest<DepositAddressResponse>(Endpoints.Account.SystemStatus(), receiveWindow);
         }
 
+        public async Task<PostMarginOrderResponse_Ack> PostMarginOrder(PostMarginOrderRequest request)
+        {
+            Guard.AgainstNull(request.symbol);
+            Guard.AgainstNull(request.side);
+            Guard.AgainstNull(request.type);
+            Guard.AgainstNull(request.quantity);
+            await RateLimiter.Requests(1);
+            await RateLimiter.WaitOrder();
+
+            switch (request.newOrderRespType)
+            {
+                case NewOrderResponseType.Acknowledge:
+                    return await _apiProcessor.ProcessPostRequest<PostMarginOrderResponse_Ack>(Endpoints.Margin.PostMarginOrder(request));
+                case NewOrderResponseType.Full:
+                    return await _apiProcessor.ProcessPostRequest<PostMarginOrderResponse_Result>(Endpoints.Margin.PostMarginOrder(request));
+                default:
+                    return await _apiProcessor.ProcessPostRequest<PostMarginOrderResponse_Result>(Endpoints.Margin.PostMarginOrder(request));
+            }
+        }
         #endregion
 
+        public async Task<CrossMarginAssetInfo[]> GetAllCrossMarginAssets()
+        {
+            await RateLimiter.Requests(1);
+            return await _apiProcessor.ProcessGetRequest<CrossMarginAssetInfo[]>(Endpoints.Margin.GetAllCrossMarginAssets());
+        }
+        public async Task<CrossMarginPair[]> GetAllCrossMarginPairs()
+        {
+            await RateLimiter.Requests(1);
+            return await _apiProcessor.ProcessGetRequest<CrossMarginPair[]>(Endpoints.Margin.GetAllCrossMarginPairs());
+        }
         private int SetReceiveWindow(int receiveWindow)
         {
             if (receiveWindow == -1)
@@ -488,6 +517,8 @@ namespace BinanceExchange.API.Client
             RateLimiter = new RateLimiter((int)(MarxRequestsPerMinute * rateLimitFactor), (int)(MaxOrdersPerSecond * rateLimitFactor));
             return _ExchangeInfo;
         }
+
+    
     }
 
 
