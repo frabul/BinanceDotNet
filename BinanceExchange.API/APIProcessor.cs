@@ -172,13 +172,14 @@ namespace BinanceExchange.API
             switch (endpoint.SecurityType)
             {
                 case EndpointSecurityType.ApiKey:
-                    var oldUri = endpoint.Uri.ToString();
-                    if (oldUri.Contains("?"))
-                        oldUri += "&";
-                    else
-                        oldUri += "?";
-                    message = await _requestClient.GetRequest(new Uri(oldUri + "X-MBX-APIKEY=" + _apiKey));
-                    break;
+					//todo fix for margin trading
+                    //var oldUri = endpoint.Uri.ToString();
+                    //if (oldUri.Contains("?"))
+                    //    oldUri += "&";
+                    //else
+                    //    oldUri += "?";
+                    //message = await _requestClient.GetRequest(new Uri(oldUri + "X-MBX-APIKEY=" + _apiKey));
+                    //break;
                 case EndpointSecurityType.None:
                     message = await _requestClient.GetRequest(endpoint.Uri);
                     break;
