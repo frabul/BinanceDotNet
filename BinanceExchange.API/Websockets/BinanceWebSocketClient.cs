@@ -46,7 +46,7 @@ namespace BinanceExchange.API.Websockets
         {
             BinanceClient = binanceClient;
             ActiveWebSockets = new Dictionary<Guid, BinanceWebSocket>();
-            Logger = logger ?? NLog.LogManager.GetCurrentClassLogger();
+            Logger = logger ?? NLog.LogManager.GetLogger("BinanceWebSocketClient");
         }
 
 

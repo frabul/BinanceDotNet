@@ -50,7 +50,7 @@ namespace BinanceExchange.API.Client
         /// <param name="apiCache"></param>
         public BinanceClient(ClientConfiguration configuration, IAPIProcessor apiProcessor = null)
         {
-            _logger = configuration.Logger ?? NLog.LogManager.GetCurrentClassLogger();
+            _logger = configuration.Logger ?? NLog.LogManager.GetLogger("BinanceClient");
             Guard.AgainstNull(configuration);
             Guard.AgainstNullOrEmpty(configuration.ApiKey);
             Guard.AgainstNull(configuration.SecretKey);
@@ -518,7 +518,7 @@ namespace BinanceExchange.API.Client
             return _ExchangeInfo;
         }
 
-    
+
     }
 
 

@@ -36,7 +36,7 @@ namespace BinanceExchange.API
             }
 
             _requestClient = requestClient;
-            _logger = NLog.LogManager.GetCurrentClassLogger();
+            _logger = NLog.LogManager.GetLogger("APIProcessor");
             _logger.Debug($"API Processor set up. Cache Enabled={_cacheEnabled}");
         }
 

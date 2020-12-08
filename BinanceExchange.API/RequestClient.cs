@@ -35,7 +35,7 @@ namespace BinanceExchange.API
 #if NETCORE
             httpClientHandler.MaxConnectionsPerServer = 500;
 #endif
-            _logger = NLog.LogManager.GetCurrentClassLogger();
+            _logger = NLog.LogManager.GetLogger("RequestClient");
         }
 
         /// <summary>
