@@ -17,7 +17,7 @@ namespace BinanceExchange.API.Models.WebSocket
 
         [DataMember(Order = 1)]
         [JsonProperty(PropertyName = "lastUpdateId")]
-        public int LastUpdateId { get; set; }
+        public long LastUpdateId { get; set; }
 
         [DataMember(Order = 2)]
         [JsonProperty(PropertyName = "bids")]
