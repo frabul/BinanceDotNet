@@ -188,7 +188,7 @@ namespace BinanceExchange.API.Websockets
                         break;
                     default:
                         Logger.Error("Unknown EventType for user data stream");
-                        throw new ArgumentOutOfRangeException("Unknown EventType for user data stream");
+                        break;
                 }
             }
 
