@@ -15,14 +15,14 @@ namespace BinanceExchange.API.Websockets
         private readonly CancellationTokenSource CancelToken = new CancellationTokenSource();
         private Action<WebSocketWrapper, string> OnMessage;
         private readonly byte[] rawBuffer = new byte[ReceiveChunkSize];
-
+        private Task WorkerTask;
         public bool IsDisocnnected { get; private set; } = true;
         public bool IsAlive => !IsDisocnnected;
 
         public WebSocketWrapper()
         {
             Socket = new ClientWebSocket();
-            Socket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20); 
+            Socket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
         }
 
         public async Task ConnectAsync(string url, Action<WebSocketWrapper, string> onMessage)
@@ -35,11 +35,13 @@ namespace BinanceExchange.API.Websockets
             await Socket.ConnectAsync(uri, CancelToken.Token);
             OnMessage = onMessage;
             IsDisocnnected = false;
+
             //start reading messages
-            _ = ReadMessages();
+            WorkerTask = Task.Factory.StartNew(ReadMessages, TaskCreationOptions.LongRunning);
         }
 
-      
+
+
         public async Task ReadMessages()
         {
             try
@@ -93,7 +95,7 @@ namespace BinanceExchange.API.Websockets
             {
                 if (!IsDisocnnected)
                 {
-                    await Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancelToken.Token); 
+                    await Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancelToken.Token);
                 }
             }
             catch
@@ -106,7 +108,7 @@ namespace BinanceExchange.API.Websockets
                 {
                     Socket.Dispose();
                 }
-                catch { } 
+                catch { }
                 CancelToken.Dispose();
             }
         }

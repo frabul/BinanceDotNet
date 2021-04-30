@@ -58,7 +58,7 @@ namespace BinanceExchange.API.Websockets
 
         public void SubscribePartialDepthStream(string symbol, PartialDepthLevels levels, Action<BinancePartialData> messageEventHandler)
         {
-            var sockName = $"{symbol.ToLower()}@depth{(int)levels}";
+            var sockName = $"{symbol.ToLower()}@depth{(int)levels}@1000ms";
             AddStreamSubscriber(sockName, messageEventHandler);
         }
 
