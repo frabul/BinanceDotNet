@@ -22,7 +22,7 @@ namespace BinanceExchange.API
             FloatParseHandling = FloatParseHandling.Decimal
         };
 
-        internal static string APIBaseUrl2 = "https://api.binance.com";
+        internal static string APIBaseUrl2 = "https://api1.binance.com";
 
         /// <summary>
         /// Defaults to API binance domain (https)
@@ -31,9 +31,9 @@ namespace BinanceExchange.API
         /// <summary>
         /// Defaults to WAPI binance domain (https)
         /// </summary>
-        internal static string WAPIBaseUrl = "https://api.binance.com/wapi";
+        internal static string WAPIBaseUrl = "https://api1.binance.com/wapi";
 
-        private static string APIPrefix { get; } = "https://api.binance.com/api";
+        private static string APIPrefix { get; } = "https://api1.binance.com/api";
         private static string WAPIPrefix { get; } = $"{WAPIBaseUrl}";
 
         public static class UserStream
