@@ -17,5 +17,8 @@ namespace BinanceExchange.API.Models.Request
 
         [DataMember(Order = 3)]
         public int? Limit { get; set; } = 1000;
+
+        public long? StartTime { get; set; }
+        public long? EndTime { get; set; }
     }
 }

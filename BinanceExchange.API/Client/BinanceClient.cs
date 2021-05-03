@@ -365,7 +365,7 @@ namespace BinanceExchange.API.Client
         {
             receiveWindow = SetReceiveWindow(receiveWindow);
             Guard.AgainstNull(request.Symbol);
-            await RateLimiter.Requests(5);
+            await RateLimiter.Requests(10);
             return await _apiProcessor.ProcessGetRequest<List<OrderResponse>>(Endpoints.Account.AllOrders(request), receiveWindow);
         }
 
@@ -389,7 +389,7 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<List<AccountTradeReponse>> GetAccountTrades(AllTradesRequest request, int receiveWindow = -1)
         {
-            await RateLimiter.Requests(5);
+            await RateLimiter.Requests(10);
             receiveWindow = SetReceiveWindow(receiveWindow);
 
             return await _apiProcessor.ProcessGetRequest<List<AccountTradeReponse>>(Endpoints.Account.AccountTradeList(request), receiveWindow);
