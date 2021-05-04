@@ -496,6 +496,13 @@ namespace BinanceExchange.API.Client
             await RateLimiter.Requests(1);
             return await _apiProcessor.ProcessGetRequest<CrossMarginPair[]>(Endpoints.Margin.GetAllCrossMarginPairs());
         }
+
+        public async Task<ConvertDustResponse> ConvertDustToBNB(ConvertDustRequest parameters)
+        {
+            await RateLimiter.Requests(1);
+            return await _apiProcessor.ProcessPostRequest<ConvertDustResponse> (Endpoints.Wallet.DustConvert(parameters));
+        }
+
         private int SetReceiveWindow(int receiveWindow)
         {
             if (receiveWindow == -1)

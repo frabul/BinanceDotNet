@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text;
 using BinanceExchange.API.Converter;
 using BinanceExchange.API.Enums;
 using BinanceExchange.API.Models.Request;
@@ -21,7 +23,7 @@ namespace BinanceExchange.API
             NullValueHandling = NullValueHandling.Ignore,
             FloatParseHandling = FloatParseHandling.Decimal
         };
-
+        private static readonly JsonSerializer DefaultSerializer = JsonSerializer.Create(_settings);
         internal static string APIBaseUrl2 = "https://api1.binance.com";
 
         /// <summary>
@@ -228,6 +230,15 @@ namespace BinanceExchange.API
             }
         }
 
+
+        public static class Wallet
+        {
+            public static BinanceEndpointData DustConvert(ConvertDustRequest request)
+            {
+                var queryString = GenerateQueryStringFromData(request);
+                return new BinanceEndpointData(new Uri($"{APIBaseUrl2}/sapi/v1/asset/dust?{queryString}"), EndpointSecurityType.Signed);
+            }
+        }
         private static string GenerateQueryStringFromData(IRequest request)
         {
             if (request == null)
@@ -235,13 +246,29 @@ namespace BinanceExchange.API
                 throw new Exception("No request data provided - query string can't be created");
             }
 
-            //TODO: Refactor to not require double JSON loop
-            var obj = (JObject)JsonConvert.DeserializeObject(JsonConvert.SerializeObject(request, _settings), _settings);
+            var obj = JObject.FromObject(request, DefaultSerializer);
+            StringBuilder builder = new StringBuilder();
+            foreach (var child in obj.Children().Cast<JProperty>())
+            {
+                if (child.Value != null)
+                {
+                    if (child.Value.Type == JTokenType.Array)
+                    {
+                        var arr = child.Value as JArray;
+                        foreach (var val in arr.Values())
+                            builder.Append(child.Name).Append("=").Append(System.Net.WebUtility.UrlEncode(val.ToString())).Append("&");
+                    }
+                    else
+                        builder.Append(child.Name).Append("=").Append(System.Net.WebUtility.UrlEncode(child.Value.ToString())).Append("&");
 
-            return String.Join("&", obj.Children()
-                .Cast<JProperty>()
-                .Where(j => j.Value != null)
-                .Select(j => j.Name + "=" + System.Net.WebUtility.UrlEncode(j.Value.ToString())));
+                }
+            }
+
+            if (builder.Length > 0)
+                return builder.ToString(0, builder.Length - 1);
+            else
+                return string.Empty;
         }
     }
+  
 }
