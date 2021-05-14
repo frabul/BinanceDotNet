@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <Version>5.0.0</Version>
     <Description>The Binance CryptoCurrency exchange C# wrapper of the API. It is built in dotnet core, supports all REST and WebSocket endpoints, has full logging capabilities, a built in Cache for selected endpoints, a Rate limiter and more. Enjoy Binance API data, fast and reliably.</Description>
     <Title>Binance Cryptocurrency Exchange - C# API in .NET</Title>
