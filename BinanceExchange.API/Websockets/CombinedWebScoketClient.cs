@@ -14,7 +14,7 @@ namespace BinanceExchange.API.Websockets
 {
     public class CombinedWebSocketClient
     {
-        private readonly int StreamsPerSocket = 20;
+        private readonly int StreamsPerSocket = 50;
         private readonly string CombinedWebsocketUri = "wss://stream.binance.com:9443/stream?streams=";
         private readonly Logger Logger = LogManager.GetLogger("CombinedWebSocketClient");
         private readonly Dictionary<string, SockStream> Streams = new Dictionary<string, SockStream>();
@@ -71,7 +71,7 @@ namespace BinanceExchange.API.Websockets
                 {
                     stream = new Stream<T>(sockName);
                     Streams.Add(stream.SockName, stream);
-                    NextRebuildTime = DateTime.Now.AddSeconds(2);
+                    NextRebuildTime = DateTime.Now.AddSeconds(5);
                 }
             }
             if (stream is Stream<T> tstream)
