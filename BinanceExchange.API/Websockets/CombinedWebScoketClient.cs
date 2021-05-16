@@ -14,14 +14,13 @@ namespace BinanceExchange.API.Websockets
 {
     public class CombinedWebSocketClient
     {
-        private readonly int StreamsPerSocket = 50;
+        private readonly int StreamsPerSocket = 40;
         private readonly string CombinedWebsocketUri = "wss://stream.binance.com:9443/stream?streams=";
         private readonly Logger Logger = LogManager.GetLogger("CombinedWebSocketClient");
         private readonly Dictionary<string, SockStream> Streams = new Dictionary<string, SockStream>();
         private readonly List<CombinedWebSocket> ActiveWebSockets = new List<CombinedWebSocket>();
         private DateTime NextRebuildTime = DateTime.MinValue;
-
-
+         
         public CombinedWebSocketClient()
         {
             _ = WebSocketsRefresher();

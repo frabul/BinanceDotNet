@@ -37,7 +37,7 @@ namespace BinanceExchange.API.Websockets
             IsDisocnnected = false;
 
             //start reading messages
-            WorkerTask = Task.Factory.StartNew(ReadMessages, TaskCreationOptions.LongRunning);
+            WorkerTask = Task.Run(ReadMessages);
         }
 
 
@@ -65,7 +65,7 @@ namespace BinanceExchange.API.Websockets
                             var str = Encoding.UTF8.GetString(rawBuffer, 0, result.Count);
                             stringResult.Append(str);
                         }
-
+                        await Task.Delay(10);
                     } while (!result.EndOfMessage);
 
                     OnMessage(this, stringResult.ToString());
