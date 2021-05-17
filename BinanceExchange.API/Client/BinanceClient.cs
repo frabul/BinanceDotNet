@@ -242,7 +242,7 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<List<SymbolPriceResponse>> GetSymbolsPriceTicker()
         {
-            await RateLimiter.Requests(50);
+            await RateLimiter.Requests(2);
             return await _apiProcessor.ProcessGetRequest<List<SymbolPriceResponse>>(Endpoints.MarketData.AllSymbolsPriceTicker);
         }
 

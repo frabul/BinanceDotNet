@@ -125,12 +125,12 @@ namespace BinanceExchange.API
                 return new BinanceEndpointData(new Uri($"{APIPrefix}/{ApiVersion}/ticker/24hr?symbol={symbol}"),
                     EndpointSecurityType.None);
             }
-
+             
             /// <summary>
             /// Latest price for all symbols.
             /// </summary>
-            public static BinanceEndpointData AllSymbolsPriceTicker => new BinanceEndpointData(new Uri($"{APIPrefix}/{ApiVersion}/ticker/allPrices"), EndpointSecurityType.ApiKey);
-
+            public static BinanceEndpointData AllSymbolsPriceTicker => new BinanceEndpointData(new Uri($"{APIPrefix}/v3/ticker/price"), EndpointSecurityType.None);
+            public static BinanceEndpointData SymbolPrice(string symbol) => new BinanceEndpointData(new Uri($"{APIPrefix}/v3/ticker/price?symbol={symbol}"), EndpointSecurityType.None);
             /// <summary>
             /// Best price/qty on the order book for all symbols.
             /// </summary>
