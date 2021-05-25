@@ -14,16 +14,17 @@ namespace BinanceExchange.API.Websockets
 {
     public class CombinedWebSocketClient
     {
-        private readonly int StreamsPerSocket = 40;
+        private readonly int StreamsPerSocket = 25;
         private readonly string CombinedWebsocketUri = "wss://stream.binance.com:9443/stream?streams=";
         private readonly Logger Logger = LogManager.GetLogger("CombinedWebSocketClient");
         private readonly Dictionary<string, SockStream> Streams = new Dictionary<string, SockStream>();
         private readonly List<CombinedWebSocket> ActiveWebSockets = new List<CombinedWebSocket>();
         private DateTime NextRebuildTime = DateTime.MinValue;
-         
+        private Task RefresherTask;
+
         public CombinedWebSocketClient()
         {
-            _ = WebSocketsRefresher();
+            RefresherTask = Task.Run(WebSocketsRefresher);
         }
 
         private async Task WebSocketsRefresher()
@@ -33,7 +34,7 @@ namespace BinanceExchange.API.Websockets
                 if (DateTime.Now > NextRebuildTime)
                 {
                     NextRebuildTime = NextRebuildTime.AddSeconds(30);
-                    try { _ = RebuildSocketsAsync(); }
+                    try { await RebuildSocketsAsync(); }
                     catch { }
                 }
                 await Task.Delay(1000);
@@ -249,6 +250,10 @@ namespace BinanceExchange.API.Websockets
                 LastPing = DateTime.Now;
             }
         }
+
+
+
+
     }
 
 

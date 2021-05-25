@@ -65,12 +65,11 @@ namespace BinanceExchange.API.Websockets
                             var str = Encoding.UTF8.GetString(rawBuffer, 0, result.Count);
                             stringResult.Append(str);
                         }
-                        await Task.Delay(10);
+                        await Task.Delay(5);
                     } while (!result.EndOfMessage);
 
                     OnMessage(this, stringResult.ToString());
                     stringResult.Clear();
-
                 }
             }
             catch (Exception)
