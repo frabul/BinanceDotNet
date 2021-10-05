@@ -39,6 +39,7 @@ namespace BinanceExchange.API.Websockets
 
         protected const string AccountEventType = "outboundAccountInfo";
         protected const string OutboundAccountPosition = "outboundAccountPosition";
+        protected const string BalanceUpdate = "balanceUpdate";
         protected const string OrderTradeEventType = "executionReport";
         protected const string ListStatus = "listStatus";
 
@@ -160,35 +161,47 @@ namespace BinanceExchange.API.Websockets
 
             void onMsg(WebSocketWrapper sender, string msg)
             {
-                Logger.Trace($"WebSocket Message Received on Endpoint: {endpoint.AbsoluteUri}");
-                var primitive = JsonConvert.DeserializeObject<BinanceWebSocketResponse>(msg);
-                switch (primitive.EventType)
+                try
                 {
-                    case AccountEventType:
-                        var userData = JsonConvert.DeserializeObject<BinanceAccountUpdateData>(msg);
-                        userDataWebSocketMessages.AccountUpdateMessageHandler(userData);
-                        break;
-                    case OrderTradeEventType:
-                        var orderTradeData = JsonConvert.DeserializeObject<BinanceTradeOrderData>(msg);
-                        if (orderTradeData.ExecutionType == ExecutionType.Trade)
-                        {
-                            userDataWebSocketMessages.TradeUpdateMessageHandler(orderTradeData);
-                        }
-                        else
-                        {
-                            userDataWebSocketMessages.OrderUpdateMessageHandler(orderTradeData);
-                        }
-                        break;
-                    case OutboundAccountPosition:
-                        var accountPosition = JsonConvert.DeserializeObject<OutboundAccountPosition>(msg);
-                        userDataWebSocketMessages?.OutboundAccountPositionHandler(accountPosition);
-                        break;
-                    case ListStatus:
-                        //todo
-                        break;
-                    default:
-                        Logger.Error("Unknown EventType for user data stream");
-                        break;
+
+                    Logger.Trace($"WebSocket Message Received on Endpoint: {endpoint.AbsoluteUri}");
+                    var primitive = JsonConvert.DeserializeObject<BinanceWebSocketResponse>(msg);
+                    switch (primitive.EventType)
+                    {
+                        case AccountEventType:
+                            var userData = JsonConvert.DeserializeObject<BinanceAccountUpdateData>(msg);
+                            userDataWebSocketMessages.AccountUpdateMessageHandler?.Invoke(userData);
+                            break;
+                        case OrderTradeEventType:
+                            var orderTradeData = JsonConvert.DeserializeObject<BinanceTradeOrderData>(msg);
+                            if (orderTradeData.ExecutionType == ExecutionType.Trade)
+                            {
+                                userDataWebSocketMessages.TradeUpdateMessageHandler?.Invoke(orderTradeData);
+                            }
+                            else
+                            {
+                                userDataWebSocketMessages.OrderUpdateMessageHandler?.Invoke(orderTradeData);
+                            }
+                            break;
+                        case OutboundAccountPosition:
+                            var accountPosition = JsonConvert.DeserializeObject<OutboundAccountPosition>(msg);
+                            userDataWebSocketMessages.OutboundAccountPositionHandler?.Invoke(accountPosition);
+                            break;
+                        case ListStatus:
+                            //todo
+                            break;
+                        case BalanceUpdate:
+                            var upd = JsonConvert.DeserializeObject<BalanceUpdateMessage>(msg);
+                            userDataWebSocketMessages.BalanceUpdateMessageHandler?.Invoke(upd);
+                            break;
+                        default:
+                            Logger.Error("Unknown EventType for user data stream");
+                            break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error("Exception while parsing user data stream event: {1}", e.Message);
                 }
             }
 

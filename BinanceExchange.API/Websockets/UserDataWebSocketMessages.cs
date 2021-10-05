@@ -8,5 +8,7 @@ namespace BinanceExchange.API.Websockets
         public BinanceWebSocketMessageHandler<BinanceTradeOrderData> OrderUpdateMessageHandler { get; set; }
         public BinanceWebSocketMessageHandler<BinanceTradeOrderData> TradeUpdateMessageHandler { get; set; }
         public BinanceWebSocketMessageHandler<OutboundAccountPosition> OutboundAccountPositionHandler { get; set; }
+        public BinanceWebSocketMessageHandler<BalanceUpdateMessage> BalanceUpdateMessageHandler { get; set; }
+        
     }
 }
