@@ -11,18 +11,18 @@ namespace BinanceExchange.API.Websockets
     {
         private const int ReceiveChunkSize = 10000;
         private const int SendChunkSize = 1024;
-        private readonly ClientWebSocket Socket;
-        private readonly CancellationTokenSource CancelToken = new CancellationTokenSource();
+        private ClientWebSocket Socket;
+        private CancellationTokenSource CancelToken;
         private Action<WebSocketWrapper, string> OnMessage;
         private readonly byte[] rawBuffer = new byte[ReceiveChunkSize];
         private Task WorkerTask;
+        private volatile bool DisconnectRequested = false;
         public bool IsDisocnnected { get; private set; } = true;
         public bool IsAlive => !IsDisocnnected;
 
         public WebSocketWrapper()
         {
-            Socket = new ClientWebSocket();
-            Socket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
+
         }
 
         public async Task ConnectAsync(string url, Action<WebSocketWrapper, string> onMessage)
@@ -32,12 +32,21 @@ namespace BinanceExchange.API.Websockets
 
         public async Task ConnectAsync(Uri uri, Action<WebSocketWrapper, string> onMessage)
         {
-            await Socket.ConnectAsync(uri, CancelToken.Token);
-            OnMessage = onMessage;
-            IsDisocnnected = false;
-
-            //start reading messages
-            WorkerTask = Task.Run(ReadMessages);
+            if (IsDisocnnected)
+            {
+                Socket = new ClientWebSocket();
+                Socket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
+                CancelToken = new CancellationTokenSource();
+                await Socket.ConnectAsync(uri, CancelToken.Token);
+                OnMessage = onMessage;
+                IsDisocnnected = false;
+                //start reading messages
+                WorkerTask = Task.Run(ReadMessages);
+            }
+            else
+            {
+                throw new InvalidOperationException("Socket is already connected");
+            }
         }
 
 
@@ -46,26 +55,25 @@ namespace BinanceExchange.API.Websockets
         {
             try
             {
-                while (Socket.State == WebSocketState.Open)
+                while (Socket.State == WebSocketState.Open && !DisconnectRequested)
                 {
                     var stringResult = new StringBuilder();
                     WebSocketReceiveResult result;
-
                     do
                     {
                         result = await Socket.ReceiveAsync(new ArraySegment<byte>(rawBuffer), CancelToken.Token);
 
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
-                            await Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-                            CallOnDisconnected();
+                            await DisconnectAndDispose();
                         }
                         else
                         {
                             var str = Encoding.UTF8.GetString(rawBuffer, 0, result.Count);
                             stringResult.Append(str);
                         }
-                        await Task.Delay(5);
+                        if (!result.EndOfMessage)
+                            await Task.Delay(5);
                     } while (!result.EndOfMessage);
 
                     OnMessage(this, stringResult.ToString());
@@ -74,28 +82,21 @@ namespace BinanceExchange.API.Websockets
             }
             catch (Exception)
             {
-                CallOnDisconnected();
+
             }
             finally
-            {
-                Socket.Dispose();
+            { 
+                await CloseAsync();
             }
 
         }
 
-        private void CallOnDisconnected()
-        {
-            IsDisocnnected = true;
-        }
-
-        public async Task CloseAsync()
+        private async Task DisconnectAndDispose()
         {
             try
             {
                 if (!IsDisocnnected)
-                {
                     await Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancelToken.Token);
-                }
             }
             catch
             {
@@ -103,13 +104,16 @@ namespace BinanceExchange.API.Websockets
             }
             finally
             {
-                try
-                {
-                    Socket.Dispose();
-                }
-                catch { }
-                CancelToken.Dispose();
+                try { Socket.Dispose(); } catch { }
+                try { CancelToken.Dispose(); } catch { }
+                IsDisocnnected = true;
             }
+        }
+        public async Task CloseAsync()
+        {
+            DisconnectRequested = true;
+            await WorkerTask;
+            DisconnectRequested = false;
         }
 
     }
