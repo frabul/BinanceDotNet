@@ -7,7 +7,7 @@ namespace BinanceExchange.API.Websockets
     /// </summary>
     public class InstanceBinanceWebSocketClient : BinanceWebSocketClient, IBinanceWebSocketClient
     {
-        public InstanceBinanceWebSocketClient(IBinanceClient binanceClient, NLog.Logger logger = null) :
+        public InstanceBinanceWebSocketClient(IBinanceClient binanceClient, Serilog.ILogger logger = null) :
             base(binanceClient, logger)
         {
         }

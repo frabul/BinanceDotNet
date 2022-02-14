@@ -20,7 +20,7 @@ namespace BinanceExchange.API
         private readonly string _apiKey;
         private readonly string _secretKey;
         private IAPICacheManager _apiCache;
-        private NLog.Logger _logger;
+        private Serilog.ILogger _logger;
         private bool _cacheEnabled;
         private TimeSpan _cacheTime;
         private readonly RequestClient _requestClient;
@@ -36,7 +36,7 @@ namespace BinanceExchange.API
             }
 
             _requestClient = requestClient;
-            _logger = NLog.LogManager.GetLogger("APIProcessor");
+            _logger = Serilog.Log.ForContext("SourceContext","APIProcessor");
             _logger.Debug($"API Processor set up. Cache Enabled={_cacheEnabled}");
         }
 

@@ -3,7 +3,7 @@ using BinanceExchange.API.Extensions;
 using BinanceExchange.API.Models.WebSocket;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using NLog;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,7 +16,7 @@ namespace BinanceExchange.API.Websockets
     {
         private readonly int StreamsPerSocket = 10;
         private readonly string CombinedWebsocketUri = "wss://stream.binance.com:9443/stream?streams=";
-        private readonly Logger Logger = LogManager.GetLogger("CombinedWebSocketClient");
+        private readonly ILogger Logger = LogManager.GetLogger("CombinedWebSocketClient");
         private readonly Dictionary<string, SockStream> Streams = new Dictionary<string, SockStream>();
         private readonly List<CombinedWebSocket> ActiveWebSockets = new List<CombinedWebSocket>();
         private DateTime NextRebuildTime = DateTime.MinValue;

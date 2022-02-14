@@ -8,9 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using BinanceExchange.API.Enums;
-using BinanceExchange.API.Extensions;
-using NLog;
-
+using BinanceExchange.API.Extensions; 
 namespace BinanceExchange.API
 {
     public class RequestClient
@@ -18,7 +16,7 @@ namespace BinanceExchange.API
         private readonly HttpClient _httpClient;
         private const string APIHeader = "X-MBX-APIKEY";
         private TimeSpan _timestampOffset;
-        private Logger _logger;
+        private Serilog.ILogger _logger;
         private readonly object LockObject = new object();
 
         public RequestClient()
@@ -35,7 +33,7 @@ namespace BinanceExchange.API
 #if NETCORE
             httpClientHandler.MaxConnectionsPerServer = 500;
 #endif
-            _logger = NLog.LogManager.GetLogger("RequestClient");
+            _logger = Serilog.Log.ForContext("SourceContext","RequestClient");
         }
 
         /// <summary>
@@ -231,7 +229,7 @@ namespace BinanceExchange.API
             return await task;
         }
 
-        public void SetLogger(NLog.Logger logger)
+        public void SetLogger(Serilog.ILogger logger)
         {
             _logger = logger;
         }

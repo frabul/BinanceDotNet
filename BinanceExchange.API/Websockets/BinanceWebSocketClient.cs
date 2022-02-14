@@ -35,7 +35,7 @@ namespace BinanceExchange.API.Websockets
         /// </summary>
         protected Dictionary<Guid, BinanceWebSocket> ActiveWebSockets;
         protected readonly IBinanceClient BinanceClient;
-        protected NLog.Logger Logger;
+        protected Serilog.ILogger Logger;
 
         protected const string AccountEventType = "outboundAccountInfo";
         protected const string OutboundAccountPosition = "outboundAccountPosition";
@@ -43,11 +43,11 @@ namespace BinanceExchange.API.Websockets
         protected const string OrderTradeEventType = "executionReport";
         protected const string ListStatus = "listStatus";
 
-        public BinanceWebSocketClient(IBinanceClient binanceClient, NLog.Logger logger = null)
+        public BinanceWebSocketClient(IBinanceClient binanceClient, Serilog.ILogger logger = null)
         {
             BinanceClient = binanceClient;
             ActiveWebSockets = new Dictionary<Guid, BinanceWebSocket>();
-            Logger = logger ?? NLog.LogManager.GetLogger("BinanceWebSocketClient");
+            Logger = logger ?? Serilog.Log.ForContext<BinanceWebSocketClient>();
         }
 
 

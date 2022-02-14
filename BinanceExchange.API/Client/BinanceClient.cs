@@ -38,7 +38,7 @@ namespace BinanceExchange.API.Client
         private readonly IAPIProcessor _apiProcessor;
         private readonly int _defaultReceiveWindow;
         private RequestClient _requestClient;
-        private readonly NLog.Logger _logger;
+        private readonly Serilog.ILogger _logger;
         private ExchangeInfoResponse _ExchangeInfo = null;
         private RateLimiter RateLimiter;
 
@@ -50,7 +50,7 @@ namespace BinanceExchange.API.Client
         /// <param name="apiCache"></param>
         public BinanceClient(ClientConfiguration configuration, IAPIProcessor apiProcessor = null)
         {
-            _logger = configuration.Logger ?? NLog.LogManager.GetLogger("BinanceClient");
+            _logger = configuration.Logger ?? Serilog.Log.ForContext("SourceContext","BinanceClient");
             Guard.AgainstNull(configuration);
             Guard.AgainstNullOrEmpty(configuration.ApiKey);
             Guard.AgainstNull(configuration.SecretKey);
