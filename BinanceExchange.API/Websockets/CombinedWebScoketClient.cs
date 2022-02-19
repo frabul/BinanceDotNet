@@ -16,7 +16,7 @@ namespace BinanceExchange.API.Websockets
     {
         private readonly int StreamsPerSocket = 10;
         private readonly string CombinedWebsocketUri = "wss://stream.binance.com:9443/stream?streams=";
-        private readonly ILogger Logger = LogManager.GetLogger("CombinedWebSocketClient");
+        private readonly ILogger Logger = Serilog.Log.ForContext<CombinedWebSocketClient>();
         private readonly Dictionary<string, SockStream> Streams = new Dictionary<string, SockStream>();
         private readonly List<CombinedWebSocket> ActiveWebSockets = new List<CombinedWebSocket>();
         private DateTime NextRebuildTime = DateTime.MinValue;
@@ -94,10 +94,7 @@ namespace BinanceExchange.API.Websockets
 
                 if (sockWatchDogFail || sockIsOld || !sock.IsAlive)
                 {
-                    Logger.Log(
-                        sockIsOld ? LogLevel.Trace : LogLevel.Debug,
-                        $"A combined websocket needs to be closed: sockWatchDogFail={sockWatchDogFail}, sockIsOld={sockIsOld}, Disconnected={sock.IsDisocnnected}  ");
-
+                    Logger.Debug("A combined websocket needs to be closed - {Flags}", new { sockWatchDogFail, sockIsOld, sock.IsDisocnnected }); 
                     CloseSocket(sock);
                 }
             }

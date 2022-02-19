@@ -50,7 +50,7 @@ namespace BinanceExchange.API.Client
         /// <param name="apiCache"></param>
         public BinanceClient(ClientConfiguration configuration, IAPIProcessor apiProcessor = null)
         {
-            _logger = configuration.Logger ?? Serilog.Log.ForContext("SourceContext","BinanceClient");
+            _logger = configuration.Logger ?? Serilog.Log.ForContext<BinanceClient>();
             Guard.AgainstNull(configuration);
             Guard.AgainstNullOrEmpty(configuration.ApiKey);
             Guard.AgainstNull(configuration.SecretKey);
@@ -500,7 +500,7 @@ namespace BinanceExchange.API.Client
         public async Task<ConvertDustResponse> ConvertDustToBNB(ConvertDustRequest parameters)
         {
             await RateLimiter.Requests(1);
-            return await _apiProcessor.ProcessPostRequest<ConvertDustResponse> (Endpoints.Wallet.DustConvert(parameters));
+            return await _apiProcessor.ProcessPostRequest<ConvertDustResponse>(Endpoints.Wallet.DustConvert(parameters));
         }
 
         private int SetReceiveWindow(int receiveWindow)

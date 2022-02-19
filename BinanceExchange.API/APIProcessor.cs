@@ -36,8 +36,8 @@ namespace BinanceExchange.API
             }
 
             _requestClient = requestClient;
-            _logger = Serilog.Log.ForContext("SourceContext","APIProcessor");
-            _logger.Debug($"API Processor set up. Cache Enabled={_cacheEnabled}");
+            _logger = Serilog.Log.ForContext<APIProcessor>();
+            _logger.Debug("API Processor set up. Cache Enabled={Enabled}", _cacheEnabled);
         }
 
         /// <summary>
@@ -87,7 +87,7 @@ namespace BinanceExchange.API
                 catch (Exception ex)
                 {
                     string deserializeErrorMessage = $"Unable to deserialize message from: {requestMessage}. Exception: {ex.Message}";
-                    _logger.Error(deserializeErrorMessage);
+                    _logger.Error(ex, "Unable to deserialize message from: {RequestMessage}", requestMessage);
                     throw new BinanceException(deserializeErrorMessage, new BinanceError()
                     {
                         RequestMessage = requestMessage,
@@ -115,7 +115,7 @@ namespace BinanceExchange.API
             if (errorObject == null) throw new BinanceException("Unexpected Error whilst handling the response", null);
             errorObject.RequestMessage = requestMessage;
             var exception = CreateBinanceException(message.StatusCode, errorObject);
-            _logger.Error($"Error Message Received:{errorJson} - {errorObject}", exception);
+            _logger.Verbose("Error Message Received:{ErrorJson} - {ErrorObject}", errorJson, errorObject);
 
             throw exception;
         }
@@ -172,14 +172,14 @@ namespace BinanceExchange.API
             switch (endpoint.SecurityType)
             {
                 case EndpointSecurityType.ApiKey:
-					//todo fix for margin trading
-                    //var oldUri = endpoint.Uri.ToString();
-                    //if (oldUri.Contains("?"))
-                    //    oldUri += "&";
-                    //else
-                    //    oldUri += "?";
-                    //message = await _requestClient.GetRequest(new Uri(oldUri + "X-MBX-APIKEY=" + _apiKey));
-                    //break;
+                //todo fix for margin trading
+                //var oldUri = endpoint.Uri.ToString();
+                //if (oldUri.Contains("?"))
+                //    oldUri += "&";
+                //else
+                //    oldUri += "?";
+                //message = await _requestClient.GetRequest(new Uri(oldUri + "X-MBX-APIKEY=" + _apiKey));
+                //break;
                 case EndpointSecurityType.None:
                     message = await _requestClient.GetRequest(endpoint.Uri);
                     break;

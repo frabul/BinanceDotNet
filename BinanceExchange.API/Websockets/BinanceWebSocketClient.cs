@@ -156,15 +156,12 @@ namespace BinanceExchange.API.Websockets
 
         private async Task<Guid> CreateUserDataBinanceWebSocketAsync(Uri endpoint, string listenKey, UserDataWebSocketMessages userDataWebSocketMessages)
         {
-
             var websocket = new BinanceWebSocket(listenKey);
-
             void onMsg(WebSocketWrapper sender, string msg)
             {
                 try
                 {
-
-                    Logger.Trace($"WebSocket Message Received on Endpoint: {endpoint.AbsoluteUri}");
+                    Logger.Verbose("WebSocket Message Received on Endpoint {Uri}", endpoint);
                     var primitive = JsonConvert.DeserializeObject<BinanceWebSocketResponse>(msg);
                     switch (primitive.EventType)
                     {
@@ -195,13 +192,13 @@ namespace BinanceExchange.API.Websockets
                             userDataWebSocketMessages.BalanceUpdateMessageHandler?.Invoke(upd);
                             break;
                         default:
-                            Logger.Error("Unknown EventType for user data stream");
+                            Logger.Error("Unknown EventType {EventType} for user data stream", primitive.EventType);
                             break;
                     }
                 }
                 catch (Exception e)
                 {
-                    Logger.Error("Exception while parsing user data stream event: {1}", e.Message);
+                    Logger.Error(e, "Exception while parsing user data stream event: {Message}", e.Message);
                 }
             }
 
@@ -220,7 +217,7 @@ namespace BinanceExchange.API.Websockets
 
             void onRecv(WebSocketWrapper sender, string msg)
             {
-                Logger.Debug($"WebSocket Messge Received on: {endpoint.AbsoluteUri}");
+                Logger.Debug("WebSocket Messge Received on: {Uri}", endpoint.AbsoluteUri);
                 //TODO: Log message received
                 var data = JsonConvert.DeserializeObject<T>(msg);
                 messageEventHandler(data);
