@@ -37,13 +37,13 @@ namespace BinanceExchange.API.Client
                 await RqSem.WaitAsync();
                 do
                 {
-                    while (RequestsQueue.Count > 0 && DateTime.Now - RequestsQueue.Peek() > RequestsInterval)
+                    while (RequestsQueue.Count > 0 && DateTime.UtcNow - RequestsQueue.Peek() > RequestsInterval)
                         RequestsQueue.Dequeue();
                     if (RequestsQueue.Count + weight > MaxRequestsPerInterval)
                         await Task.Delay(50);
                 } while (RequestsQueue.Count + weight > MaxRequestsPerInterval);
                 for (int i = 0; i < weight; i++)
-                    RequestsQueue.Enqueue(DateTime.Now);
+                    RequestsQueue.Enqueue(DateTime.UtcNow);
             }
             finally
             {
@@ -59,7 +59,7 @@ namespace BinanceExchange.API.Client
         {
             if (RqSem.Wait(100))
             {
-                while (RequestsQueue.Count > 0 && DateTime.Now - RequestsQueue.Peek() > RequestsInterval)
+                while (RequestsQueue.Count > 0 && DateTime.UtcNow - RequestsQueue.Peek() > RequestsInterval)
                     RequestsQueue.Dequeue();
                 int reqs = RequestsQueue.Count;
                 RqSem.Release();
@@ -89,7 +89,7 @@ namespace BinanceExchange.API.Client
                 do
                 {
                     //delete orders that have been in the queue long enough
-                    while (OrdersQueue.Count > 0 && DateTime.Now - OrdersQueue.Peek() > OrdersInterval)
+                    while (OrdersQueue.Count > 0 && DateTime.UtcNow - OrdersQueue.Peek() > OrdersInterval)
                         OrdersQueue.Dequeue();
                     //if we are not still in the condition to post new order wait some time
                     if (OrdersQueue.Count + 1 > MaxOrdersPerInterval)
@@ -97,7 +97,7 @@ namespace BinanceExchange.API.Client
                     //repeat untile we can post new order
                 } while (OrdersQueue.Count + 1 > MaxOrdersPerInterval);
                 //
-                OrdersQueue.Enqueue(DateTime.Now); 
+                OrdersQueue.Enqueue(DateTime.UtcNow); 
             }
             finally
             {

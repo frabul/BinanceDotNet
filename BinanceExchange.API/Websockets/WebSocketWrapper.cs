@@ -85,7 +85,7 @@ namespace BinanceExchange.API.Websockets
 
             }
             finally
-            { 
+            {
                 await CloseAsync();
             }
 
