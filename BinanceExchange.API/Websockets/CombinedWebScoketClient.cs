@@ -1,4 +1,5 @@
-﻿using BinanceExchange.API.Enums;
+﻿using BinanceExchange.API.Client;
+using BinanceExchange.API.Enums;
 using BinanceExchange.API.Extensions;
 using BinanceExchange.API.Models.WebSocket;
 using Newtonsoft.Json;
@@ -21,23 +22,24 @@ namespace BinanceExchange.API.Websockets
         private readonly List<CombinedWebSocket> ActiveWebSockets = new List<CombinedWebSocket>();
         private DateTime NextRebuildTime = DateTime.MinValue;
         private Task RefresherTask;
-
-        public CombinedWebSocketClient()
+        private BinanceClient Client;
+        public CombinedWebSocketClient(BinanceClient client)
         {
             RefresherTask = Task.Run(WebSocketsRefresher);
+            Client = client;
         }
 
         private async Task WebSocketsRefresher()
         {
             while (true)
             {
-                if (DateTime.Now > NextRebuildTime)
+                if (DateTime.UtcNow > NextRebuildTime)
                 {
-                    NextRebuildTime = NextRebuildTime.AddSeconds(30);
+                    NextRebuildTime = NextRebuildTime.AddSeconds(5);
                     try { await RebuildSocketsAsync(); }
                     catch { }
                 }
-                await Task.Delay(1000);
+                await Task.Delay(500);
             }
         }
 
@@ -71,7 +73,7 @@ namespace BinanceExchange.API.Websockets
                 {
                     stream = new Stream<T>(sockName);
                     Streams.Add(stream.SockName, stream);
-                    NextRebuildTime = DateTime.Now.AddSeconds(5);
+                    NextRebuildTime = DateTime.UtcNow.AddSeconds(5);
                 }
             }
             if (stream is Stream<T> tstream)
@@ -83,6 +85,27 @@ namespace BinanceExchange.API.Websockets
 
         private async Task RebuildSocketsAsync()
         {
+            //check service availability
+            bool ok = false;
+            int tries = 0;
+            while (!ok && tries < 2)
+            {
+                try
+                {
+                    var rep = await Client.GetServerTime();
+                    ok = true;
+                }
+                catch (Exception ex)
+                {
+                    tries++;
+                }
+            }
+            if (!ok)
+            {
+                Logger.Warning("Skipping RebuildSocketsAsync bacuase GetServerTime failed.");
+                return;
+            }
+
             //close sockets older than 6h or that are not responsive
             CombinedWebSocket[] socks;
             lock (ActiveWebSockets)
@@ -90,21 +113,28 @@ namespace BinanceExchange.API.Websockets
             foreach (var sock in socks)
             {
                 bool sockWatchDogFail = sock.WatchDog.Elapsed > TimeSpan.FromSeconds(30);
-                bool sockIsOld = DateTime.Now > sock.CreationTime.AddHours(2);
+                bool sockIsOld = DateTime.UtcNow > sock.CreationTime.AddHours(2);
 
-                if (sockWatchDogFail || sockIsOld || !sock.IsAlive)
+                if (sockWatchDogFail || !sock.IsAlive)
                 {
-                    Logger.Debug("A combined websocket needs to be closed - {Flags}", new { sockWatchDogFail, sockIsOld, sock.IsDisocnnected }); 
+                    Logger.Debug("A combined websocket needs to be closed - {Flags}", new { sockWatchDogFail, sockIsOld, sock.IsDisocnnected });
                     CloseSocket(sock);
+                }
+                else if (sockIsOld)
+                {
+                    //handover of socket only in the middle of the minute to avoid skipping kline events
+                    if (DateTime.UtcNow.Second > 15 && DateTime.UtcNow.Second < 45)
+                        CloseSocket(sock);
                 }
             }
 
-            //check that all streams have a socket
+            //that all streams have a socket and open new sockets  
             Queue<SockStream> streamsWithNoSocket;
             lock (ActiveWebSockets)
             {
                 lock (Streams)
-                    streamsWithNoSocket = new Queue<SockStream>(Streams.Values.Where(st => !ActiveWebSockets.Any(sock => sock.Streams.Any(ss => ss == st))).ToArray());
+                    streamsWithNoSocket = new Queue<SockStream>(
+                        Streams.Values.Where(st => !ActiveWebSockets.Any(sock => sock.Streams.Any(ss => ss == st))).ToArray());
             }
 
             while (streamsWithNoSocket.Count > 0)
@@ -178,8 +208,17 @@ namespace BinanceExchange.API.Websockets
             {
                 if (ActiveWebSockets.Contains(sock))
                 {
+                    // remove the socket from active sockets so a new one gets created 
                     ActiveWebSockets.Remove(sock);
-                    try { _ = sock.CloseAsync(); }
+                    // close the socket with a delay to avoid skipping events
+                    try
+                    {
+                        _ = Task.Run(async () =>
+                        {
+                            await Task.Delay(10000);
+                            await sock.CloseAsync();
+                        });
+                    }
                     catch { }
                 }
             }
@@ -240,11 +279,11 @@ namespace BinanceExchange.API.Websockets
 
             public Stopwatch WatchDog { get; } = new Stopwatch();
             public SockStream[] Streams { get; internal set; }
-            public DateTime CreationTime { get; } = DateTime.Now;
+            public DateTime CreationTime { get; } = DateTime.UtcNow;
             public DateTime LastPing;
             public CombinedWebSocket()
             {
-                LastPing = DateTime.Now;
+                LastPing = DateTime.UtcNow;
             }
         }
 
