@@ -120,7 +120,7 @@ namespace BinanceExchange.API.Websockets
             Guard.AgainstNullOrEmpty(symbols, nameof(symbols));
             Guard.AgainstNullOrEmpty(depth, nameof(depth));
             symbols = PrepareCombinedSymbols.CombinedPartialDepth(symbols, depth);
-            Logger.Debug("Connecting to Combined Partial Depth Web Socket");
+            Logger.Verbose("Connecting to Combined Partial Depth Web Socket");
             var endpoint = new Uri($"{CombinedWebsocketUri}={symbols}");
             return await CreateBinanceWebSocketAsync(endpoint, messageEventHandler);
         }
@@ -134,7 +134,7 @@ namespace BinanceExchange.API.Websockets
         public async Task<Guid> ConnectToTradesWebSocketAsync(string symbol, BinanceWebSocketMessageHandler<BinanceAggregateTradeData> messageEventHandler)
         {
             Guard.AgainstNullOrEmpty(symbol, nameof(symbol));
-            Logger.Debug("Connecting to Trades Web Socket");
+            Logger.Verbose("Connecting to Trades Web Socket");
             var endpoint = new Uri($"{BaseWebsocketUri}/{symbol.ToLower()}@aggTrade");
             return await CreateBinanceWebSocketAsync(endpoint, messageEventHandler);
         }
@@ -147,7 +147,7 @@ namespace BinanceExchange.API.Websockets
         public async Task<Guid> ConnectToUserDataWebSocket(UserDataWebSocketMessages userDataMessageHandlers)
         {
             Guard.AgainstNull(BinanceClient, nameof(BinanceClient));
-            Logger.Debug("Connecting to User Data Web Socket");
+            Logger.Verbose("Connecting to User Data Web Socket");
             var streamResponse = await BinanceClient.StartUserDataStream();
 
             var endpoint = new Uri($"{BaseWebsocketUri}/{streamResponse.ListenKey}");
@@ -291,7 +291,25 @@ namespace BinanceExchange.API.Websockets
             }
             else
             {
-                throw new Exception($"No Websocket exists with the Id {guid.ToString()}");
+                throw new Exception($"No Websocket exists with the Id {guid}");
+            }
+        }
+
+        /// <summary>
+        /// Send a keep alive request for the listenKey if the socket is an USER_STREAM
+        /// </summary>
+        /// <param name="guid">Websocket instance GUID</param> 
+        public async Task KeepAliveListenKey(Guid guid)
+        {
+            if (ActiveWebSockets.ContainsKey(guid))
+            {
+                var ws = ActiveWebSockets[guid];
+                if(ws.ListenKey != null) 
+                    await BinanceClient.KeepAliveUserDataStream(ws.ListenKey); 
+            }
+            else
+            {
+                throw new Exception($"No Websocket exists with the Id {guid}");
             }
         }
     }
