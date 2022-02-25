@@ -156,7 +156,7 @@ namespace BinanceExchange.API.Client
         public async Task<ExchangeInfoResponse> GetExchangeInfo()
         {
             if (RateLimiter != null)
-                await RateLimiter.Requests(1);
+                await RateLimiter.Requests(10);
             return await _apiProcessor.ProcessGetRequest<ExchangeInfoResponse>(Endpoints.General.ExchangeInfo);
         }
 
