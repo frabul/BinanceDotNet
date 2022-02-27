@@ -85,27 +85,6 @@ namespace BinanceExchange.API.Websockets
 
         private async Task RebuildSocketsAsync()
         {
-            //check service availability
-            bool ok = false;
-            int tries = 0;
-            while (!ok && tries < 2)
-            {
-                try
-                {
-                    var rep = await Client.GetServerTime();
-                    ok = true;
-                }
-                catch (Exception ex)
-                {
-                    tries++;
-                }
-            }
-            if (!ok)
-            {
-                Logger.Warning("Skipping RebuildSocketsAsync bacuase GetServerTime failed.");
-                return;
-            }
-
             //close sockets older than 6h or that are not responsive
             CombinedWebSocket[] socks;
             lock (ActiveWebSockets)
@@ -135,6 +114,30 @@ namespace BinanceExchange.API.Websockets
                 lock (Streams)
                     streamsWithNoSocket = new Queue<SockStream>(
                         Streams.Values.Where(st => !ActiveWebSockets.Any(sock => sock.Streams.Any(ss => ss == st))).ToArray());
+            }
+
+            if (streamsWithNoSocket.Count > 0)
+            {
+                //check service availability
+                bool ok = false;
+                int tries = 0;
+                while (!ok && tries < 2)
+                {
+                    try
+                    {
+                        var rep = await Client.GetServerTime();
+                        ok = true;
+                    }
+                    catch
+                    {
+                        tries++;
+                    }
+                }
+                if (!ok)
+                {
+                    Logger.Warning("Skipping RebuildSocketsAsync bacuase GetServerTime failed.");
+                    return;
+                }
             }
 
             while (streamsWithNoSocket.Count > 0)
