@@ -51,16 +51,11 @@ namespace BinanceExchange.API.Models.WebSocket
         [JsonProperty(PropertyName = "F")]
         public double IcebergQuantity { get; set; }
 
-        #region Undefined API Result fields
-        //TODO: Update when Binance API updated 
-
-
         [JsonProperty(PropertyName = "g")]
         public string g { get; set; }
 
         [JsonProperty(PropertyName = "C")]
         public string OriginalClientOrderId { get; set; }
-        #endregion
 
         [JsonProperty(PropertyName = "x")]
         [JsonConverter(typeof(StringEnumConverter))]
@@ -111,7 +106,7 @@ namespace BinanceExchange.API.Models.WebSocket
         public long I { get; set; }
 
         [JsonProperty(PropertyName = "w")]
-        public bool w { get; set; }
+        public bool IsOnBook { get; set; }
         #endregion
 
 
@@ -119,15 +114,20 @@ namespace BinanceExchange.API.Models.WebSocket
         public bool IsBuyerMaker { get; set; }
 
         #region Undefined API Result fields
+
         //TODO: Update when Binance API updated
         [JsonProperty(PropertyName = "M")]
         public bool M { get; set; }
 
+        #endregion
         [JsonProperty(PropertyName = "O")]
-        public long O { get; set; }
+        public long OrderCreationTime { get; set; }
 
         [JsonProperty(PropertyName = "Z")]
-        public decimal Z { get; set; }
-        #endregion
+        public decimal CumulativeQuoteassetTransactedQuantity { get; set; }
+        [JsonProperty(PropertyName = "Y")]
+        public decimal LastQuoteassetTransactedQuantity { get; set; }
+        [JsonProperty(PropertyName = "Q")]
+        public decimal QuoteOrderQuantity { get; set; }
     }
 }
