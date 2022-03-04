@@ -11,36 +11,32 @@ namespace BinanceExchange.API.Models.Response
     [DataContract]
     public class AccountTradeReponse
     {
-        [DataMember(Order = 1)]
+        public string Symbol { get; set; }
         public long Id { get; set; }
 
-        [DataMember(Order = 2)]
         public long OrderId { get; set; }
 
-        [DataMember(Order = 3)]
+        public long OrderListId { get; set; }
+
         public decimal Price { get; set; }
 
-        [DataMember(Order = 4)]
         [JsonProperty(PropertyName = "qty")]
         public decimal Quantity { get; set; }
 
-        [DataMember(Order = 5)]
+        [JsonProperty(PropertyName = "quoteQty")]
+        public decimal QuoteQuantity { get; set; }
+
         public decimal Commission { get; set; }
 
-        [DataMember(Order = 6)]
         public string CommissionAsset { get; set; }
 
-        [DataMember(Order = 7)]
         [JsonConverter(typeof(EpochTimeConverter))]
         public DateTime Time { get; set; }
 
-        [DataMember(Order = 8)]
         public bool IsBuyer { get; set; }
 
-        [DataMember(Order = 9)]
         public bool IsMaker { get; set; }
 
-        [DataMember(Order = 10)]
-        public bool IsBestMatch { get; set; } 
+        public bool IsBestMatch { get; set; }
     }
 }
