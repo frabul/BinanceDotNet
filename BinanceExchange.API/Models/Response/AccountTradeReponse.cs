@@ -7,13 +7,11 @@ namespace BinanceExchange.API.Models.Response
 {
     /// <summary>
     /// Response providing Account Trade information
-    /// </summary>
-    [DataContract]
+    /// </summary> 
     public class AccountTradeReponse
     {
         public string Symbol { get; set; }
-        public long Id { get; set; }
-
+        public long Id { get; set; } 
         public long OrderId { get; set; }
 
         public long OrderListId { get; set; }
