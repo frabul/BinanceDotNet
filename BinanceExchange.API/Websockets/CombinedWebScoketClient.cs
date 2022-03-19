@@ -2,8 +2,7 @@
 using BinanceExchange.API.Enums;
 using BinanceExchange.API.Extensions;
 using BinanceExchange.API.Models.WebSocket;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -180,11 +179,12 @@ namespace BinanceExchange.API.Websockets
             }
             endpoint = endpoint.Remove(endpoint.Length - 1);
             var websocket = new CombinedWebSocket { Streams = streamsPerSocket };
-            void onMsg(WebSocketWrapper sender, string msg)
+            void onMsg(WebSocketWrapper sender, ReadOnlySpan<char> msg)
             {
                 try
                 {
-                    var datum = JsonConvert.DeserializeObject<BinanceCombinedWebsocketData>(msg);
+
+                    var datum = System.Text.Json.JsonSerializer.Deserialize<BinanceCombinedWebsocketData>(msg);
                     SockStream stream;
                     bool found;
                     lock (Streams)
@@ -236,7 +236,7 @@ namespace BinanceExchange.API.Websockets
 
             public string SockName { get; private set; }
 
-            abstract public void Pulse(JObject jsonData);
+            abstract public void Pulse(System.Text.Json.JsonDocument jsonData);
             abstract public void Unsubscribe(Delegate del);
         }
 
@@ -265,9 +265,9 @@ namespace BinanceExchange.API.Websockets
                         Subscribes.Remove((Action<T>)action);
             }
 
-            public override void Pulse(JObject jsonData)
+            public override void Pulse(System.Text.Json.JsonDocument jsonData)
             {
-                var resp = jsonData.ToObject<T>(); //  Newtonsoft.Json.JsonConvert.DeserializeObject<T>(jsonData);
+                var resp = System.Text.Json.JsonSerializer.Deserialize<T>(jsonData); //  Newtonsoft.Json.JsonConvert.DeserializeObject<T>(jsonData);
                 lock (Subscribes)
                     foreach (var sub in Subscribes)
                         sub.Invoke(resp);

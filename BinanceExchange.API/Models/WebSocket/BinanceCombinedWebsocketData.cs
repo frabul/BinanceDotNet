@@ -4,15 +4,19 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace BinanceExchange.API.Models.WebSocket
 {
-    [DataContract]
+ 
     public class BinanceCombinedWebsocketData
     {
+        [JsonPropertyName("stream")]
         [JsonProperty("stream")]
         public string StreamName { get; set; } 
+
         [JsonProperty("data")]
-        public JObject RawData { get; set; }
+        [JsonPropertyName("data")]
+        public System.Text.Json.JsonDocument RawData { get; set; }
     }
 }

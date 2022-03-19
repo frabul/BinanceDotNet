@@ -9,11 +9,14 @@ namespace BinanceExchange.API.Websockets
 {
     public class WebSocketWrapper
     {
-        private const int ReceiveChunkSize = 10000;
+        public delegate void OnMessageHandler(WebSocketWrapper wrapepr, ReadOnlySpan<char> msg);
+        public delegate void OnMessageHandlerSlow(WebSocketWrapper wrapepr, string msg);
+        private const int ReceiveChunkSize = 100000;
         private const int SendChunkSize = 1024;
         private ClientWebSocket Socket;
         private CancellationTokenSource CancelToken;
-        private Action<WebSocketWrapper, string> OnMessage;
+        private OnMessageHandlerSlow OnMessageSlow;
+        private OnMessageHandler OnMessage;
         private readonly byte[] rawBuffer = new byte[ReceiveChunkSize];
         private Task WorkerTask;
         private volatile bool DisconnectRequested = false;
@@ -25,12 +28,12 @@ namespace BinanceExchange.API.Websockets
 
         }
 
-        public async Task ConnectAsync(string url, Action<WebSocketWrapper, string> onMessage)
+        public async Task ConnectAsync(string url, OnMessageHandler onMessage)
         {
             await ConnectAsync(new Uri(url), onMessage);
         }
 
-        public async Task ConnectAsync(Uri uri, Action<WebSocketWrapper, string> onMessage)
+        public async Task ConnectAsync(Uri uri, OnMessageHandler onMessage)
         {
             if (IsDisocnnected)
             {
@@ -48,7 +51,24 @@ namespace BinanceExchange.API.Websockets
                 throw new InvalidOperationException("Socket is already connected");
             }
         }
-
+        public async Task ConnectAsync(Uri uri, OnMessageHandlerSlow onMessage)
+        {
+            if (IsDisocnnected)
+            {
+                Socket = new ClientWebSocket();
+                Socket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
+                CancelToken = new CancellationTokenSource();
+                await Socket.ConnectAsync(uri, CancelToken.Token);
+                OnMessageSlow = onMessage;
+                IsDisocnnected = false;
+                //start reading messages
+                WorkerTask = Task.Run(ReadMessages);
+            }
+            else
+            {
+                throw new InvalidOperationException("Socket is already connected");
+            }
+        }
 
 
         public async Task ReadMessages()
@@ -57,27 +77,31 @@ namespace BinanceExchange.API.Websockets
             {
                 while (Socket.State == WebSocketState.Open && !DisconnectRequested)
                 {
-                    var stringResult = new StringBuilder();
+                    //var stringResult = new StringBuilder();
                     WebSocketReceiveResult result;
+                    int offset = 0;
                     do
                     {
-                        result = await Socket.ReceiveAsync(new ArraySegment<byte>(rawBuffer), CancelToken.Token);
 
+                        result = await Socket.ReceiveAsync(new ArraySegment<byte>(rawBuffer, offset, rawBuffer.Length - offset), CancelToken.Token);
+                        offset += result.Count;
+                        if (offset >= rawBuffer.Length)
+                            Serilog.Log.Error("ReceiveBufferOverflow in WebSocketWrapper");
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
                             await DisconnectAndDispose();
                         }
-                        else
-                        {
-                            var str = Encoding.UTF8.GetString(rawBuffer, 0, result.Count);
-                            stringResult.Append(str);
-                        }
+                        //else
+                        //{
+                        //    var str = Encoding.UTF8.GetString(rawBuffer, 0, result.Count);
+                        //    stringResult.Append(str);
+                        //}
                         if (!result.EndOfMessage)
                             await Task.Delay(5);
                     } while (!result.EndOfMessage);
-
-                    OnMessage(this, stringResult.ToString());
-                    stringResult.Clear();
+                    var msgStr = Encoding.UTF8.GetString(rawBuffer, 0, offset);
+                    OnMessage?.Invoke(this, msgStr.AsSpan());
+                    OnMessageSlow?.Invoke(this, msgStr);
                 }
             }
             catch (Exception)

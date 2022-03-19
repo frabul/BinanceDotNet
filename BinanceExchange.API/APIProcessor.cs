@@ -78,11 +78,16 @@ namespace BinanceExchange.API
                 }
 
                 //decode message 
-                var messageJson = await message.Content.ReadAsStringAsync();
+
                 T messageObject = null;
+                var messageJson = await message.Content.ReadAsStringAsync();
                 try
                 {
-                    messageObject = JsonConvert.DeserializeObject<T>(messageJson);
+                    if (typeof(T) == typeof(List<Models.Response.OrderBookResponse>))
+                        messageObject = System.Text.Json.JsonSerializer.Deserialize<T>(messageJson.AsSpan());
+                    else
+                        messageObject = JsonConvert.DeserializeObject<T>(messageJson);
+
                 }
                 catch (Exception ex)
                 {

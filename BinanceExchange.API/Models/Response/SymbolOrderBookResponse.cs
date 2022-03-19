@@ -1,25 +1,23 @@
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 
 namespace BinanceExchange.API.Models.Response
 {
-    [DataContract]
-    public class SymbolOrderBookResponse
-    {
-        [DataMember(Order = 1)]
-        public string Symbol { get; set; }
 
-        [DataMember(Order = 2)]
+    public class SymbolOrderBookResponse
+    { 
+        public string Symbol { get; set; }
+         
         public decimal BidPrice { get; set; }
 
-        [DataMember(Order = 3)]
+        [JsonPropertyName("bidQty")]
         [JsonProperty(PropertyName = "bidQty")]
         public decimal BidQuantity { get; set; }
 
-        [DataMember(Order = 4)]
         public decimal AskPrice { get; set; }
 
-        [DataMember(Order = 5)]
+        [JsonPropertyName("askQty")]
         [JsonProperty(PropertyName = "askQty")]
         public decimal AskQuantity { get; set; }
     }
