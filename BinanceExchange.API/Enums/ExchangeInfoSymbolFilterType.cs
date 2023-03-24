@@ -24,6 +24,10 @@ namespace BinanceExchange.API.Enums
         MaxNumOrders,
         [EnumMember(Value = "MAX_POSITION")]
         MaxPosition,
+        [EnumMember(Value = "TRAILING_DELTA")]
+        TrailingDelta,
+        [EnumMember(Value = "PERCENT_PRICE_BY_SIDE")]
+        PercentPriceBySide,
         UnknownFilter,
     }
 }
