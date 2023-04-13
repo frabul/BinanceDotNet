@@ -9,6 +9,7 @@ using BinanceExchange.API.Enums;
 
 namespace BinanceExchange.API.Converter
 {
+
     public class ExchangeInfoSymbolFilterConverter : JsonConverter
     {
         public override bool CanWrite => false;
@@ -21,10 +22,10 @@ namespace BinanceExchange.API.Converter
             ExchangeInfoSymbolFilter item = null;
             try
             {
-                var value = jObject.ToObject<ExchangeInfoSymbolFilter>();
+                ExchangeInfoSymbolFilterType filterType = jObject["filterType"].ToObject<ExchangeInfoSymbolFilterType>();
 
 
-                switch (value.FilterType)
+                switch (filterType)
                 {
                     case ExchangeInfoSymbolFilterType.PriceFilter:
                         item = new ExchangeInfoSymbolFilterPrice();
@@ -44,8 +45,11 @@ namespace BinanceExchange.API.Converter
                     case ExchangeInfoSymbolFilterType.MarketLotSize:
                         item = new ExchangeInfoSymbolFilter();
                         break;
+                    case ExchangeInfoSymbolFilterType.Notional:
+                        item = new ExchangeInfoSymbolFilterNotional();
+                        break;
                     default:
-                        item = new ExchangeInfoSymbolFilter() { FilterType = value.FilterType };
+                        item = new ExchangeInfoSymbolFilter() { FilterType = filterType };
                         break;
                 }
                 serializer.Populate(jObject.CreateReader(), item);

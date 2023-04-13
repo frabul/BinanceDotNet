@@ -28,6 +28,8 @@ namespace BinanceExchange.API.Enums
         TrailingDelta,
         [EnumMember(Value = "PERCENT_PRICE_BY_SIDE")]
         PercentPriceBySide,
+        [EnumMember(Value = "NOTIONAL")]
+        Notional,
         UnknownFilter,
     }
 }
