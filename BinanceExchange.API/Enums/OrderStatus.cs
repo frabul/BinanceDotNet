@@ -18,5 +18,8 @@ namespace BinanceExchange.API.Enums
         Rejected,
         [EnumMember(Value = "EXPIRED")]
         Expired,
+        [EnumMember(Value = "EXPIRED_IN_MATCH")]
+        /// <summary> The order was canceled by the exchange due to STP trigger. (e.g. an order with EXPIRE_TAKER will match with existing orders on the book with the same account or same tradeGroupId) </summary>
+        ExpiredInMatch
     }
 }
