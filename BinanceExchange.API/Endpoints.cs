@@ -5,6 +5,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using BinanceExchange.API.Converter;
 using BinanceExchange.API.Enums;
+using BinanceExchange.API.Extensions;
 using BinanceExchange.API.Models.Request;
 using BinanceExchange.API.Models.Request.Interfaces;
 using Newtonsoft.Json;
@@ -125,7 +126,7 @@ namespace BinanceExchange.API
                 return new BinanceEndpointData(new Uri($"{APIPrefix}/{ApiVersion}/ticker/24hr?symbol={symbol}"),
                     EndpointSecurityType.None);
             }
-             
+
             /// <summary>
             /// Latest price for all symbols.
             /// </summary>
@@ -239,6 +240,17 @@ namespace BinanceExchange.API
                 return new BinanceEndpointData(new Uri($"{APIBaseUrl2}/sapi/v1/asset/dust?{queryString}"), EndpointSecurityType.Signed);
             }
         }
+
+        public static class Other
+        {
+            public static BinanceEndpointData GetDelistSchedule(DateTime time)
+            {
+                var timestamp = time.ConvertToUnixTime();
+                return new BinanceEndpointData(new Uri($"{APIBaseUrl2}/sapi/v1/spot/delist-schedule?timestamp={timestamp}"), EndpointSecurityType.Signed);
+            }
+
+        }
+
         private static string GenerateQueryStringFromData(IRequest request)
         {
             if (request == null)
@@ -270,5 +282,5 @@ namespace BinanceExchange.API
                 return string.Empty;
         }
     }
-  
+
 }

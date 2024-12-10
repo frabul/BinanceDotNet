@@ -525,6 +525,14 @@ namespace BinanceExchange.API.Client
             return _ExchangeInfo;
         }
 
+        #region Other
+        public async Task<List<DelistEvent>> GetDelistEvents(DateTime time)
+        {
+            await RateLimiter.Requests(100);
+            return await _apiProcessor.ProcessGetRequest<List<DelistEvent>>(Endpoints.Other.GetDelistSchedule(time));
+        }
+        #endregion
+
 
     }
 
