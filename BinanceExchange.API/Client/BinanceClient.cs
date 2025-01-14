@@ -10,6 +10,7 @@ using BinanceExchange.API.Models.Request;
 using BinanceExchange.API.Models.Response;
 using BinanceExchange.API.Models.Response.Abstract;
 using BinanceExchange.API.Utility;
+using Newtonsoft.Json.Linq;
 
 namespace BinanceExchange.API.Client
 {
@@ -499,8 +500,20 @@ namespace BinanceExchange.API.Client
 
         public async Task<ConvertDustResponse> ConvertDustToBNB(ConvertDustRequest parameters)
         {
-            await RateLimiter.Requests(1);
+            await RateLimiter.Requests(10);
             return await _apiProcessor.ProcessPostRequest<ConvertDustResponse>(Endpoints.Wallet.DustConvert(parameters));
+        }
+
+        public async Task<List<string>> GetDustAssets()
+        {
+            await RateLimiter.Requests(1);
+            JObject obj = await _apiProcessor.ProcessPostRequest<JObject>(Endpoints.Wallet.GetDustAssets());
+            List<string> assets = new List<string>();
+            foreach (var item in obj["details"])
+            {
+                assets.Add(item["asset"].ToString());
+            }
+            return assets;
         }
 
         private int SetReceiveWindow(int receiveWindow)

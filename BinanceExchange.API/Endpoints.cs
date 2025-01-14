@@ -239,6 +239,10 @@ namespace BinanceExchange.API
                 var queryString = GenerateQueryStringFromData(request);
                 return new BinanceEndpointData(new Uri($"{APIBaseUrl2}/sapi/v1/asset/dust?{queryString}"), EndpointSecurityType.Signed);
             }
+            public static BinanceEndpointData GetDustAssets()
+            {
+                return new BinanceEndpointData(new Uri($"{APIBaseUrl2}/sapi/v1/asset/dust-btc"), EndpointSecurityType.Signed);
+            }
         }
 
         public static class Other
