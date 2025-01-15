@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -80,13 +81,13 @@ namespace BinanceExchange.API.Websockets
                     stringResult.Clear();
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                Debug.WriteLine($"Exception in WebsocketWrapper.ReadMessages {ex}");
             }
             finally
             {
-                await CloseAsync();
+                await DisconnectAndDispose();
             }
 
         }
