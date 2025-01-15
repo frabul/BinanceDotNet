@@ -157,7 +157,7 @@ namespace BinanceExchange.API.Client
         public async Task<ExchangeInfoResponse> GetExchangeInfo()
         {
             if (RateLimiter != null)
-                await RateLimiter.Requests(10);
+                await RateLimiter.Requests(20);
             return await _apiProcessor.ProcessGetRequest<ExchangeInfoResponse>(Endpoints.General.ExchangeInfo);
         }
 
@@ -180,9 +180,9 @@ namespace BinanceExchange.API.Client
             }
             var weight = 1;
             if (limit > 499)
-                weight = 5;
+                weight = 50;
             else if (limit > 999)
-                weight = 10;
+                weight = 250;
             await RateLimiter.Requests(weight);
             return await _apiProcessor.ProcessGetRequest<OrderBookResponse>(Endpoints.MarketData.OrderBook(symbol, limit, useCache));
         }
@@ -200,7 +200,7 @@ namespace BinanceExchange.API.Client
             {
                 request.Limit = 500;
             }
-            await RateLimiter.Requests(1);
+            await RateLimiter.Requests(2);
             return await _apiProcessor.ProcessGetRequest<List<CompressedAggregateTradeResponse>>(Endpoints.MarketData.CompressedAggregateTrades(request));
         }
 
@@ -218,7 +218,7 @@ namespace BinanceExchange.API.Client
             {
                 request.Limit = 10000;
             }
-            await RateLimiter.Requests(1);
+            await RateLimiter.Requests(2);
             return await _apiProcessor.ProcessGetRequest<List<KlineCandleStickResponse>>(Endpoints.MarketData.KlineCandlesticks(request));
         }
 
@@ -230,9 +230,9 @@ namespace BinanceExchange.API.Client
         public async Task<SymbolPriceChangeTickerResponse> GetDailyTicker(string symbol)
         {
             Guard.AgainstNull(symbol);
-            var weight = 1;
+            var weight = 2;
             if (symbol == null)
-                weight = _ExchangeInfo.Symbols.Count / 2;
+                weight = 80;
             await RateLimiter.Requests(weight);
             return await _apiProcessor.ProcessGetRequest<SymbolPriceChangeTickerResponse>(Endpoints.MarketData.DayPriceTicker(symbol));
         }
@@ -243,7 +243,7 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<List<SymbolPriceResponse>> GetSymbolsPriceTicker()
         {
-            await RateLimiter.Requests(2);
+            await RateLimiter.Requests(4);
             return await _apiProcessor.ProcessGetRequest<List<SymbolPriceResponse>>(Endpoints.MarketData.AllSymbolsPriceTicker);
         }
 
@@ -253,7 +253,7 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<List<SymbolOrderBookResponse>> GetSymbolsOrderBookTicker()
         {
-            await RateLimiter.Requests(2);
+            await RateLimiter.Requests(4);
             return await _apiProcessor.ProcessGetRequest<List<SymbolOrderBookResponse>>(Endpoints.MarketData.SymbolsOrderBookTicker());
         }
 
@@ -263,7 +263,7 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<SymbolOrderBookResponse> GetSymbolOrderBookTicker(string symbol)
         {
-            await RateLimiter.Requests(1);
+            await RateLimiter.Requests(2);
             return await _apiProcessor.ProcessGetRequest<SymbolOrderBookResponse>(Endpoints.MarketData.SymbolsOrderBookTicker(symbol));
         }
         #endregion
@@ -321,7 +321,7 @@ namespace BinanceExchange.API.Client
         {
             receiveWindow = SetReceiveWindow(receiveWindow);
             Guard.AgainstNull(request.Symbol);
-            await RateLimiter.Requests(1);
+            await RateLimiter.Requests(4);
             return await _apiProcessor.ProcessGetRequest<OrderResponse>(Endpoints.Account.QueryOrder(request), receiveWindow);
         }
 
@@ -349,9 +349,9 @@ namespace BinanceExchange.API.Client
         public async Task<List<OrderResponse>> GetCurrentOpenOrders(CurrentOpenOrdersRequest request, int receiveWindow = -1)
         {
             receiveWindow = SetReceiveWindow(receiveWindow);
-            var weight = 1;
+            var weight = 6;
             if (request.Symbol == null)
-                weight = 40;
+                weight = 80;
             await RateLimiter.Requests(weight);
             return await _apiProcessor.ProcessGetRequest<List<OrderResponse>>(Endpoints.Account.CurrentOpenOrders(request), receiveWindow);
         }
@@ -366,7 +366,7 @@ namespace BinanceExchange.API.Client
         {
             receiveWindow = SetReceiveWindow(receiveWindow);
             Guard.AgainstNull(request.Symbol);
-            await RateLimiter.Requests(10);
+            await RateLimiter.Requests(20);
             return await _apiProcessor.ProcessGetRequest<List<OrderResponse>>(Endpoints.Account.AllOrders(request), receiveWindow);
         }
 
@@ -378,8 +378,8 @@ namespace BinanceExchange.API.Client
         public async Task<AccountInformationResponse> GetAccountInformation(int receiveWindow = -1)
         {
             receiveWindow = SetReceiveWindow(receiveWindow);
-            await RateLimiter.Requests(5);
-            return await _apiProcessor.ProcessGetRequest<AccountInformationResponse>(Endpoints.Account.AccountInformation, receiveWindow);
+            await RateLimiter.Requests(20);
+            return await _apiProcessor.ProcessGetRequest<AccountInformationResponse>(Endpoints.Account.AccountInformation(false), receiveWindow);
         }
 
         /// <summary>
@@ -390,9 +390,8 @@ namespace BinanceExchange.API.Client
         /// <returns></returns>
         public async Task<List<AccountTradeReponse>> GetAccountTrades(AllTradesRequest request, int receiveWindow = -1)
         {
-            await RateLimiter.Requests(10);
+            await RateLimiter.Requests(20);
             receiveWindow = SetReceiveWindow(receiveWindow);
-
             return await _apiProcessor.ProcessGetRequest<List<AccountTradeReponse>>(Endpoints.Account.AccountTradeList(request), receiveWindow);
         }
 
