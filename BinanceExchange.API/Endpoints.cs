@@ -287,4 +287,38 @@ namespace BinanceExchange.API
         }
     }
 
+
+    public class ApiAddresses
+    {
+        public string[] RestApiAddresses { get; private set; }
+        public string PublicDataAddress { get; private set; }
+        protected string UserDataStreamUri { get; private set; }
+        protected string CombinedWebsocketUri { get; private set; }
+
+        public static ApiAddresses MainNet = new ApiAddresses
+        {
+            RestApiAddresses = new string[] {
+                "https://api.binance.com",
+                "https://api-gcp.binance.com",
+                "https://api1.binance.com",
+                "https://api2.binance.com",
+                "https://api3.binance.com",
+                "https://api4.binance.com",
+            },
+            PublicDataAddress = "https://data-api.binance.vision",
+            UserDataStreamUri = "wss://stream.binance.com:9443/ws",
+            CombinedWebsocketUri = "wss://stream.binance.com:9443/stream?streams=",
+        };
+        public static ApiAddresses TestNet = new ApiAddresses
+        {
+            RestApiAddresses = new string[] {
+                "https://testnet.binance.vision"
+            },
+            PublicDataAddress = "https://data-api.binance.vision",
+            UserDataStreamUri = "wss://testnet.binance.vision/ws",
+            CombinedWebsocketUri = "wss://testnet.binance.vision/stream?streams=",
+
+        };
+    }
+
 }
