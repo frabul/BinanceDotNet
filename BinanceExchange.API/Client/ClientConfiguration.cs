@@ -12,5 +12,6 @@ namespace BinanceExchange.API.Client
         public Serilog.ILogger Logger { get; set; }
         public int DefaultReceiveWindow { get; set; } = 5000;
         public double RateLimitFactor { get; set; } = 0.6;
+        public bool TestNet { get; set; } = false;
     }
 }

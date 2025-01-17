@@ -42,15 +42,17 @@ namespace BinanceExchange.API.Client
         private readonly Serilog.ILogger _logger;
         private ExchangeInfoResponse _ExchangeInfo = null;
         private RateLimiter RateLimiter;
-
-
+        public ApiAddresses Addresses { get; }
+        public Endpoints Endpoints { get; }
         /// <summary>
         /// Create a new Binance Client based on the configuration provided
         /// </summary>
         /// <param name="configuration"></param>
         /// <param name="apiCache"></param>
-        public BinanceClient(ClientConfiguration configuration, IAPIProcessor apiProcessor = null)
+        public BinanceClient(ClientConfiguration configuration,  IAPIProcessor apiProcessor = null)
         {
+            Addresses = configuration.TestNet ? ApiAddresses.TestNet : ApiAddresses.MainNet;
+            Endpoints = new Endpoints(Addresses);
             _logger = configuration.Logger ?? Serilog.Log.ForContext<BinanceClient>();
             Guard.AgainstNull(configuration);
             Guard.AgainstNullOrEmpty(configuration.ApiKey);

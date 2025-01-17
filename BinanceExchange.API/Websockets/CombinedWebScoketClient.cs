@@ -16,7 +16,7 @@ namespace BinanceExchange.API.Websockets
     public class CombinedWebSocketClient
     {
         private readonly int StreamsPerSocket = 10;
-        private readonly string CombinedWebsocketUri = "wss://stream.binance.com:9443/stream?streams=";
+        private readonly string CombinedWebsocketUri;
         private readonly ILogger Logger = Serilog.Log.ForContext<CombinedWebSocketClient>();
         private readonly Dictionary<string, SockStream> Streams = new Dictionary<string, SockStream>();
         private readonly List<CombinedWebSocket> ActiveWebSockets = new List<CombinedWebSocket>();
@@ -25,6 +25,7 @@ namespace BinanceExchange.API.Websockets
         private BinanceClient Client;
         public CombinedWebSocketClient(BinanceClient client)
         {
+            CombinedWebsocketUri = client.Addresses.CombinedWebsocketUriPrefix;
             RefresherTask = Task.Run(WebSocketsRefresher);
             Client = client;
         }

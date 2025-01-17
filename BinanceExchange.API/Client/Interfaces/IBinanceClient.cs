@@ -162,5 +162,7 @@ namespace BinanceExchange.API.Client.Interfaces
         /// </summary>
         Task<ExchangeInfoResponse> GetExchangeInfo();
 
+        ApiAddresses Addresses { get; }
+
     }
 }
