@@ -75,6 +75,9 @@ namespace BinanceExchange.API
             {
                 RestApiDomain = RestApiDomain
             };
+            Other = new Other{
+                RestApiDomain = RestApiDomain
+            };
         }
 
 
